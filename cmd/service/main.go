@@ -1,7 +1,15 @@
 package main
 
-import "log"
+import (
+	"github.com/flowck/news_service_ddd_golang/internal/common/logs"
+)
+
+var (
+	Version = "" // injected during build
+)
 
 func main() {
-	log.Println("news_service")
+	logger := logs.New(true)
+
+	logger.Info("news_service")
 }
