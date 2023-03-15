@@ -1,0 +1,12 @@
+version: '3.8'
+
+services:
+  app:
+    build: ./misc/tools/reflex
+    container_name: news_service_app
+    env_file:
+      - ./.env
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/usr/app

@@ -1,0 +1,19 @@
+version: 3
+
+dotenv:
+  - ./.env
+
+tasks:
+  run:
+    cmds:
+      - task watch -- go run ./cmd/service
+
+  run:tail:
+    cmds:
+      - docker logs -f --tail 10 news_service_app
+
+  watch:
+    cmds:
+      - |
+        reflex -r '\.go' -s -- sh -c '{{.CLI_ARGS}}'
+        
