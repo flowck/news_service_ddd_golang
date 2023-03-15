@@ -17,3 +17,18 @@ tasks:
       - |
         reflex -r '\.go' -s -- sh -c '{{.CLI_ARGS}}'
         
+  lint:docker:
+    cmds:
+      - docker run --rm -v $(pwd):/app -w /app golangci/golangci-lint:v1.51.1 golangci-lint run -v
+
+  lint:
+    cmds:
+      - golangci-lint run
+
+  lint:fix:
+    cmds:
+      - golangci-lint run --fix
+
+  fmt:
+    cmds:
+      - gofmt .
