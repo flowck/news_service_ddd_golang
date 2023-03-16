@@ -16,7 +16,18 @@ tasks:
     cmds:
       - |
         reflex -r '\.go' -s -- sh -c '{{.CLI_ARGS}}'
+
+  wait-for:
+    cmds:
+      - |
+        echo "Waiting service to launch on {{.CLI_ARGS}}..."
         
+        while ! nc -z localhost {{.CLI_ARGS}}; do
+          sleep 0.1 # wait for 1/10 of the second before check again
+        done
+        
+        echo "Service launched"      
+
   lint:docker:
     cmds:
       - docker run --rm -v $(pwd):/app -w /app golangci/golangci-lint:v1.51.1 golangci-lint run -v
@@ -35,8 +46,31 @@ tasks:
 
   test:all:
     cmds:
+      - task wait-for -- 8080
       - task test
+      - task test:components
 
   test:
     cmds:
       - go test ./internal/...
+
+  test:components:
+    cmds:
+      - go test ./tests/components/...
+
+  openapi:
+    cmds:
+      - |
+        oapi-codegen \
+          -package static \
+          -generate chi-server,types,spec \
+          ./api/openapi.yml > ./internal/ports/http/static/server.gen.go
+      - |
+        oapi-codegen \
+          -package client \
+          -generate client,types,spec \
+          ./api/openapi.yml > ./tests/client/client.gen.go
+
+  docker:up:
+    cmds:
+      - docker compose up -d

@@ -1,17 +1,24 @@
 package main
 
 import (
+	"context"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
+	"time"
+
+	"github.com/flowck/news_service_ddd_golang/internal/app"
+	"github.com/flowck/news_service_ddd_golang/internal/ports/http"
 
 	"github.com/flowck/news_service_ddd_golang/internal/common/logs"
 	"github.com/kelseyhightower/envconfig"
 )
 
 type Config struct {
-	Port      int16  `envconfig:"PORT"`
-	DebugMode string `envconfig:"FLAG_DEBUG_MODE"`
+	Port              int16  `envconfig:"PORT"`
+	DebugMode         string `envconfig:"FLAG_DEBUG_MODE"`
+	AllowedCorsOrigin string `envconfig:"ALLOWED_CORS_ORIGIN"`
 }
 
 func main() {
@@ -23,17 +30,27 @@ func main() {
 	logger := logs.New(cfg.DebugMode == "enabled")
 	logger.Info("news_service")
 
-	// ctx, cancel := context.WithCancel(context.Background())
-	// defer cancel()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
 	done := make(chan os.Signal, 1)
 	signal.Notify(done, syscall.SIGINT, syscall.SIGTERM)
 
+	application := &app.App{
+		Commands: app.Commands{},
+		Queries:  app.Queries{},
+	}
+
+	httpPort := http.NewPort(ctx, cfg.Port, strings.Split(cfg.AllowedCorsOrigin, ";"), application, logger)
+	httpPort.Start()
+
 	<-done
 	logger.Info("Preparing to shutdown gracefully")
 
-	// ctxTerm, cancelCtxTerm := context.WithTimeout(ctx, time.Second*15)
-	// defer cancelCtxTerm()
+	ctxTerm, cancelCtxTerm := context.WithTimeout(ctx, time.Second*15)
+	defer cancelCtxTerm()
+
+	httpPort.Stop(ctxTerm)
 
 	logger.Info("The service has been terminated")
 }

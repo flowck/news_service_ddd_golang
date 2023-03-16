@@ -1,0 +1,105 @@
+openapi: 3.0.3
+info:
+  title: news_service
+  description: News Service
+  termsOfService: https://github.com/flowck/news_service_ddd_golang
+  contact:
+    email: firmino.changani@gmail.com
+  license:
+    name: MIT
+    url: https://github.com/flowck/news_service_ddd_golang/LICENSE.md
+  version: 0.0.1
+externalDocs:
+  description: https://github.com/flowck/news_service_ddd_golang/README.md
+  url: https://github.com/flowck/news_service_ddd_golang
+servers:
+  - url: http://localhost:3000
+  - url: http://localhost:3100
+paths:
+  /news:
+    get:
+      tags:
+        - News
+      summary: Get news
+      operationId: getNews
+      responses:
+        '200':
+          $ref: '#/components/responses/DefaultSuccess'
+        default:
+          $ref: '#/components/responses/DefaultError'
+
+components:
+  schemas:
+    News:
+      type: object
+      required:
+        - id
+        - title
+        - slug
+        - content
+        - status
+        - topics
+        - publishedAt
+        - lastEditedAt
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        slug:
+          type: string
+        content:
+          type: string
+        status:
+          type: string
+        topics:
+          type: string
+        publishedAt:
+          type: string
+          format: date-time
+        lastEditedAt:
+          type: string
+          format: date-time
+    GenericResponse:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
+    ErrorResponse:
+      type: object
+      required:
+        - message
+        - code
+      properties:
+        message:
+          type: string
+          description: A description about the error
+        code:
+          type: string
+          description: Error custom error code such as 'email_in_use'
+  responses:
+    UnauthorizedError:
+      description: 'Usually causes by an authentication token missing'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    DefaultSuccess:
+      description: 'Default message when an operation succeeds'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/GenericResponse'
+    DefaultError:
+      description: 'A generic error response'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
