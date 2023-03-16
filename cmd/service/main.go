@@ -1,15 +1,12 @@
 package main
 
 import (
-	"github.com/flowck/news_service_ddd_golang/internal/common/logs"
-	"github.com/kelseyhightower/envconfig"
 	"os"
 	"os/signal"
 	"syscall"
-)
 
-var (
-	Version = "" // injected during build
+	"github.com/flowck/news_service_ddd_golang/internal/common/logs"
+	"github.com/kelseyhightower/envconfig"
 )
 
 type Config struct {
@@ -51,8 +48,8 @@ func getConfig() (*Config, error) {
 	return cfg, nil
 }
 
-func fatalOnErr(logger *logs.Logger, err error) {
-	if err != nil {
-		logger.Fatal(err)
-	}
-}
+// func fatalOnErr(logger *logs.Logger, err error) {
+// 	if err != nil {
+// 		logger.Fatal(err)
+// 	}
+// }

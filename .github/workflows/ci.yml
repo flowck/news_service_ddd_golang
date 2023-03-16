@@ -19,6 +19,9 @@ jobs:
         with:
           go-version: '~1.19'
 
+      - name: Test all
+        run: task test:all
+
   golangci:
     name: lint
     runs-on: ubuntu-latest
