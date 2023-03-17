@@ -8,6 +8,8 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/flowck/news_service_ddd_golang/internal/app/commands"
+
 	"github.com/flowck/news_service_ddd_golang/internal/app"
 	"github.com/flowck/news_service_ddd_golang/internal/ports/http"
 
@@ -37,8 +39,20 @@ func main() {
 	signal.Notify(done, syscall.SIGINT, syscall.SIGTERM)
 
 	application := &app.App{
-		Commands: app.Commands{},
-		Queries:  app.Queries{},
+		Commands: app.Commands{
+			PublishNews:   commands.NewPublishNewsHandler(),
+			UnPublishNews: nil,
+			EditNews:      nil,
+			CreateTopic:   nil,
+			RemoveTopic:   nil,
+			EditTopic:     nil,
+		},
+		Queries: app.Queries{
+			News:         nil,
+			MultipleNews: nil,
+			Topic:        nil,
+			Topics:       nil,
+		},
 	}
 
 	httpPort := http.NewPort(ctx, cfg.Port, strings.Split(cfg.AllowedCorsOrigin, ";"), application, logger)

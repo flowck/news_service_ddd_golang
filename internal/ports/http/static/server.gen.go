@@ -12,6 +12,7 @@ import (
 	"net/url"
 	"path"
 	"strings"
+	"time"
 
 	"github.com/deepmap/oapi-codegen/pkg/runtime"
 	"github.com/getkin/kin-openapi/openapi3"
@@ -32,6 +33,16 @@ type GenericResponse struct {
 	Message string `json:"message"`
 }
 
+// PublishNewsRequest defines model for PublishNewsRequest.
+type PublishNewsRequest struct {
+	Content     string    `json:"content"`
+	PublishedAt time.Time `json:"publishedAt"`
+	Slug        string    `json:"slug"`
+	Status      string    `json:"status"`
+	Title       string    `json:"title"`
+	Topics      []string  `json:"topics"`
+}
+
 // DefaultError defines model for DefaultError.
 type DefaultError = ErrorResponse
 
@@ -46,11 +57,17 @@ type GetNewsParams struct {
 	Topic  *string  `form:"topic,omitempty" json:"topic,omitempty"`
 }
 
+// PublishNewsJSONRequestBody defines body for PublishNews for application/json ContentType.
+type PublishNewsJSONRequestBody = PublishNewsRequest
+
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
 	// Get news
 	// (GET /news)
 	GetNews(w http.ResponseWriter, r *http.Request, params GetNewsParams)
+	// Publish news
+	// (POST /news)
+	PublishNews(w http.ResponseWriter, r *http.Request)
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
@@ -105,6 +122,21 @@ func (siw *ServerInterfaceWrapper) GetNews(w http.ResponseWriter, r *http.Reques
 
 	var handler http.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GetNews(w, r, params)
+	})
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r.WithContext(ctx))
+}
+
+// PublishNews operation middleware
+func (siw *ServerInterfaceWrapper) PublishNews(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	var handler http.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.PublishNews(w, r)
 	})
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -230,6 +262,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/news", wrapper.GetNews)
 	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/news", wrapper.PublishNews)
+	})
 
 	return r
 }
@@ -237,18 +272,20 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"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",
+	"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",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

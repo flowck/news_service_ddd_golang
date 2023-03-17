@@ -58,7 +58,8 @@ func New(
 	status Status,
 	topics []*Topic,
 	publishedAt,
-	lastEditedAt time.Time) (*News, error) {
+	lastEditedAt time.Time,
+) (*News, error) {
 	if id.IsZero() {
 		return nil, errors.New("id cannot be invalid")
 	}

@@ -12,6 +12,11 @@ tasks:
     cmds:
       - docker logs -f --tail 10 news_service_app
 
+  run:checks:
+    cmds:
+      - task fmt
+      - task lint
+
   watch:
     cmds:
       - |
@@ -42,7 +47,7 @@ tasks:
 
   fmt:
     cmds:
-      - gofmt .
+      - gofmt -w -s ./
 
   test:all:
     cmds:

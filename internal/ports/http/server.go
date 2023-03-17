@@ -120,6 +120,8 @@ func registerHandlers(r *chi.Mux, application *app.App, swagger *openapi3.T) {
 
 			h.GetNews(w, rq, params)
 		})
+
+		r.Post("/", h.PublishNews)
 	})
 }
 

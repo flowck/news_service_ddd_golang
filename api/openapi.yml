@@ -17,6 +17,22 @@ servers:
   - url: http://localhost:3100
 paths:
   /news:
+    post:
+      tags:
+        - News
+      summary: Publish news
+      operationId: publishNews
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PublishNewsRequest"
+      responses:
+        '204':
+          description: News published
+        default:
+          $ref: '#/components/responses/DefaultError'
     get:
       tags:
         - News
@@ -82,6 +98,25 @@ components:
           type: string
           format: date-time
         lastEditedAt:
+          type: string
+          format: date-time
+    PublishNewsRequest:
+      type: object
+      required: [title, slug, content, status, topics, publishedAt]
+      properties:
+        title:
+          type: string
+        slug:
+          type: string
+        content:
+          type: string
+        status:
+          type: string
+        topics:
+          type: array
+          items:
+            type: string
+        publishedAt:
           type: string
           format: date-time
     GenericResponse:

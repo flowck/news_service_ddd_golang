@@ -1,6 +1,10 @@
 package app
 
-import "context"
+import (
+	"context"
+
+	"github.com/flowck/news_service_ddd_golang/internal/app/commands"
+)
 
 type CommandHandler[C any] interface {
 	Execute(ctx context.Context, cmd C) error
@@ -11,7 +15,7 @@ type QueryHandler[Q any, R any] interface {
 }
 
 type Commands struct {
-	PublishNews   CommandHandler[any]
+	PublishNews   CommandHandler[commands.PublishNews]
 	UnPublishNews CommandHandler[any]
 	EditNews      CommandHandler[any]
 	CreateTopic   CommandHandler[any]

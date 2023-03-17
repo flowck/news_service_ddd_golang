@@ -15,6 +15,7 @@ import (
 	"net/url"
 	"path"
 	"strings"
+	"time"
 
 	"github.com/deepmap/oapi-codegen/pkg/runtime"
 	"github.com/getkin/kin-openapi/openapi3"
@@ -34,6 +35,16 @@ type GenericResponse struct {
 	Message string `json:"message"`
 }
 
+// PublishNewsRequest defines model for PublishNewsRequest.
+type PublishNewsRequest struct {
+	Content     string    `json:"content"`
+	PublishedAt time.Time `json:"publishedAt"`
+	Slug        string    `json:"slug"`
+	Status      string    `json:"status"`
+	Title       string    `json:"title"`
+	Topics      []string  `json:"topics"`
+}
+
 // DefaultError defines model for DefaultError.
 type DefaultError = ErrorResponse
 
@@ -47,6 +58,9 @@ type GetNewsParams struct {
 	Status *string  `form:"status,omitempty" json:"status,omitempty"`
 	Topic  *string  `form:"topic,omitempty" json:"topic,omitempty"`
 }
+
+// PublishNewsJSONRequestBody defines body for PublishNews for application/json ContentType.
+type PublishNewsJSONRequestBody = PublishNewsRequest
 
 // RequestEditorFn  is the function signature for the RequestEditor callback function
 type RequestEditorFn func(ctx context.Context, req *http.Request) error
@@ -123,10 +137,39 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 type ClientInterface interface {
 	// GetNews request
 	GetNews(ctx context.Context, params *GetNewsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// PublishNews request with any body
+	PublishNewsWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	PublishNews(ctx context.Context, body PublishNewsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
 
 func (c *Client) GetNews(ctx context.Context, params *GetNewsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetNewsRequest(c.Server, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PublishNewsWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPublishNewsRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PublishNews(ctx context.Context, body PublishNewsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPublishNewsRequest(c.Server, body)
 	if err != nil {
 		return nil, err
 	}
@@ -232,6 +275,46 @@ func NewGetNewsRequest(server string, params *GetNewsParams) (*http.Request, err
 	return req, nil
 }
 
+// NewPublishNewsRequest calls the generic PublishNews builder with application/json body
+func NewPublishNewsRequest(server string, body PublishNewsJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewPublishNewsRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewPublishNewsRequestWithBody generates requests for PublishNews with any type of body
+func NewPublishNewsRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/news")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
 func (c *Client) applyEditors(ctx context.Context, req *http.Request, additionalEditors []RequestEditorFn) error {
 	for _, r := range c.RequestEditors {
 		if err := r(ctx, req); err != nil {
@@ -277,6 +360,11 @@ func WithBaseURL(baseURL string) ClientOption {
 type ClientWithResponsesInterface interface {
 	// GetNews request
 	GetNewsWithResponse(ctx context.Context, params *GetNewsParams, reqEditors ...RequestEditorFn) (*GetNewsResponse, error)
+
+	// PublishNews request with any body
+	PublishNewsWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PublishNewsResponse, error)
+
+	PublishNewsWithResponse(ctx context.Context, body PublishNewsJSONRequestBody, reqEditors ...RequestEditorFn) (*PublishNewsResponse, error)
 }
 
 type GetNewsResponse struct {
@@ -302,6 +390,28 @@ func (r GetNewsResponse) StatusCode() int {
 	return 0
 }
 
+type PublishNewsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSONDefault  *ErrorResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r PublishNewsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r PublishNewsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 // GetNewsWithResponse request returning *GetNewsResponse
 func (c *ClientWithResponses) GetNewsWithResponse(ctx context.Context, params *GetNewsParams, reqEditors ...RequestEditorFn) (*GetNewsResponse, error) {
 	rsp, err := c.GetNews(ctx, params, reqEditors...)
@@ -309,6 +419,23 @@ func (c *ClientWithResponses) GetNewsWithResponse(ctx context.Context, params *G
 		return nil, err
 	}
 	return ParseGetNewsResponse(rsp)
+}
+
+// PublishNewsWithBodyWithResponse request with arbitrary body returning *PublishNewsResponse
+func (c *ClientWithResponses) PublishNewsWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PublishNewsResponse, error) {
+	rsp, err := c.PublishNewsWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePublishNewsResponse(rsp)
+}
+
+func (c *ClientWithResponses) PublishNewsWithResponse(ctx context.Context, body PublishNewsJSONRequestBody, reqEditors ...RequestEditorFn) (*PublishNewsResponse, error) {
+	rsp, err := c.PublishNews(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePublishNewsResponse(rsp)
 }
 
 // ParseGetNewsResponse parses an HTTP response from a GetNewsWithResponse call
@@ -344,21 +471,49 @@ func ParseGetNewsResponse(rsp *http.Response) (*GetNewsResponse, error) {
 	return response, nil
 }
 
+// ParsePublishNewsResponse parses an HTTP response from a PublishNewsWithResponse call
+func ParsePublishNewsResponse(rsp *http.Response) (*PublishNewsResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &PublishNewsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"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",
+	"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",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file
