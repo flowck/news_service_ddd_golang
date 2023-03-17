@@ -50,7 +50,16 @@ func (h handlers) PublishNews(w nethttp.ResponseWriter, r *nethttp.Request) {
 		return
 	}
 
-	err = h.application.Commands.PublishNews.Execute(r.Context(), commands.PublishNews{News: n})
+	topicIDs, err := mapTopicIdsToDomainIds(body.TopicIds)
+	if err != nil {
+		reply(w, r, newErrorWithStatus(err, "invalid-topic-id", nethttp.StatusBadRequest))
+		return
+	}
+
+	err = h.application.Commands.PublishNews.Execute(r.Context(), commands.PublishNews{
+		News:     n,
+		TopicIds: topicIDs,
+	})
 	if err != nil {
 		reply(w, r, newErrorWithStatus(err, "unable-to-publish", nethttp.StatusInternalServerError))
 		return

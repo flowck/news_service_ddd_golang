@@ -12,10 +12,10 @@ tasks:
     cmds:
       - docker logs -f --tail 10 news_service_app
 
-  run:checks:
+  checks:
     cmds:
       - task fmt
-      - task lint
+      - task lint:fix
 
   watch:
     cmds:

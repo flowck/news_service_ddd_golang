@@ -102,7 +102,7 @@ components:
           format: date-time
     PublishNewsRequest:
       type: object
-      required: [title, slug, content, status, topics, publishedAt]
+      required: [title, slug, content, status, topicIds, publishedAt]
       properties:
         title:
           type: string
@@ -112,7 +112,7 @@ components:
           type: string
         status:
           type: string
-        topics:
+        topicIds:
           type: array
           items:
             type: string

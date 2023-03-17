@@ -40,7 +40,7 @@ type PublishNewsRequest struct {
 	Slug        string    `json:"slug"`
 	Status      string    `json:"status"`
 	Title       string    `json:"title"`
-	Topics      []string  `json:"topics"`
+	TopicIds    []string  `json:"topicIds"`
 }
 
 // DefaultError defines model for DefaultError.
@@ -278,14 +278,14 @@ var swaggerSpec = []string{
 	"afReNJg9tWgyYTLbo4uUmeeisPbAyQMyE582XD1D7ziJFA4N1PHvKV1MymTwZPWgA29kkjYTPnuDWqhu",
 	"pcwqeHwDOdC2R6jAk1OmYamGQqfQy+xonYm1DZRRi4llirTLweFDUA5rqD6NsHkq/H7cb9efURIzf63m",
 	"pOWj0r6PbI7l77DulG8/4JO/xYeAnua0Hc0x0adP+VgvY3xjnRYEFdSC8CdSGudE9V1oZtE8CQp+NkSK",
-	"OpyP2F7JmKQI9Zns9EM4J7YTfRL0UFY+tjuWM1KctjuVkztAGZyi7R07N8n3FoVDtwzU8modV7/vdfrj",
-	"n48w+JyRUvSgWUvUp3uEXwidEd2VTb2eupH3+aooGkVtWC+k1cWms0/y38Lgk195dI9K4qqu61VjO2Ga",
-	"4vZ6efX+eqFryCG47iUYLKwyG7v3iJDRA/FOQQUb5bQydiFbYRph1K8NBxgXJnOB/ZfdJQbIoVMSB88b",
-	"EYV5f/Px5YUWf978dv3hLnbLZkCn/V+bPd1LOh/9CMc7IIdHdD61VC7KxQXT2R6N6BVUcLkoF5fsIkFt",
-	"PMSIzx8NRunGMXhTQwXvkFiXmOCERkLnofr0DIrxHwK6LeR7gTqlFe2tFEe1Fl+UDhqqi7LMQSszrEZz",
-	"maDX6Ni285B9mlBHiP8fY7xCB5TJsJrPjHfum4n3+elD+3NZnnuixn3FV29fdGL8892p6SGPlz1oLdw2",
-	"HVVm0lmRaPiUoqXhnkek9TOHezR4IY0j9PTW1ttXe45nRvvudPSRC7ibiPjLdLzE6znOvtcSbSjwjHBp",
-	"mrrHvekPd78qis5K0bXWU3VZliWwh87FLzh+v/svAAD//6f2efujCQAA",
+	"OpyP2F7JmzqmKUJ9Jj/9EM6J7UShBD4Ulo8NjwUdkZy2PJWUu0AZnKLtHbs3SfgWhUO3DNTyah1Xv++1",
+	"+uOfjzB4nZFS9KBbS9Snu4RfCJ0R3ZWVfupI3ueromgUtWG9kFYXm84+yX8Lg09+5dE9Komruq5Xje2E",
+	"aYrb6+XV++uFriGH4LqXYLC0ymzs3idCRh/EewUVbJTTytiFbIVphFG/NhxgXJjMBvZgdpcYIIdOSRx8",
+	"b0QU5v3Nx5cXWvx589v1h7vYLdsBnfZ/bfZ0L+l89CQc74AcHtH51FK5KBcXTGd7NKJXUMHlolxcsosE",
+	"tfEQIz5/NBilG0fhTQ0VvENiXWKCExoJnYfq0zMoxn8I6LaQ7wXqlFa0t1Ic11p8UTpoqC7KMgetzLAa",
+	"zWWCXqNj285D9mlKHSH+f4zxEh1QJgNrPjPeum8m3uenj+3PZXnumRr3FV+9f9GJ8c93p6bHPF72oLVw",
+	"23RUmUlnRaLhU4qWhnsek9bPHO7R8IU0kNDTW1tvX+1Jnhnvu9PhRy7gbiLiL9PxEq/nOPteS7ShwDPC",
+	"pWnqHvemP9z9qig6K0XXWk/VZVmWwB46F7/g+P3uvwAAAP//09LR/6cJAAA=",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file
