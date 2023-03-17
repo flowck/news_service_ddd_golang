@@ -79,3 +79,19 @@ tasks:
   docker:up:
     cmds:
       - docker compose up -d
+
+  mig:up:
+    cmds:
+      - goose -s -dir ./misc/sql/migrations up
+
+  mig:down:
+    cmds:
+      - goose -s -dir ./misc/sql/migrations down
+
+  mig:create:
+    cmds:
+      - goose -s -dir ./misc/sql/migrations create {{.CLI_ARGS}} sql
+
+  orm:generate:
+    cmds:
+      - sqlboiler psql --wipe --no-tests -o ./internal/adapters/models
