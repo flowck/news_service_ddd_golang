@@ -22,6 +22,30 @@ paths:
         - News
       summary: Get news
       operationId: getNews
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: number
+            minimum: 1
+            maximum: 100
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: number
+            minimum: 1
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: topic
+          in: query
+          required: false
+          schema:
+            type: string
       responses:
         '200':
           $ref: '#/components/responses/DefaultSuccess'
@@ -80,6 +104,18 @@ components:
           type: string
           description: Error custom error code such as 'email_in_use'
   responses:
+    GetNewsPayload:
+      description: OK
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [ data ]
+            properties:
+              data:
+                type: array
+                items:
+                  $ref: "#/components/schemas/News"
     UnauthorizedError:
       description: 'Usually causes by an authentication token missing'
       content:

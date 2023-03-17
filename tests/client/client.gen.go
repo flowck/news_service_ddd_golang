@@ -16,6 +16,7 @@ import (
 	"path"
 	"strings"
 
+	"github.com/deepmap/oapi-codegen/pkg/runtime"
 	"github.com/getkin/kin-openapi/openapi3"
 )
 
@@ -38,6 +39,14 @@ type DefaultError = ErrorResponse
 
 // DefaultSuccess defines model for DefaultSuccess.
 type DefaultSuccess = GenericResponse
+
+// GetNewsParams defines parameters for GetNews.
+type GetNewsParams struct {
+	Limit  *float32 `form:"limit,omitempty" json:"limit,omitempty"`
+	Page   *float32 `form:"page,omitempty" json:"page,omitempty"`
+	Status *string  `form:"status,omitempty" json:"status,omitempty"`
+	Topic  *string  `form:"topic,omitempty" json:"topic,omitempty"`
+}
 
 // RequestEditorFn  is the function signature for the RequestEditor callback function
 type RequestEditorFn func(ctx context.Context, req *http.Request) error
@@ -113,11 +122,11 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 // The interface specification for the client above.
 type ClientInterface interface {
 	// GetNews request
-	GetNews(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+	GetNews(ctx context.Context, params *GetNewsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
 
-func (c *Client) GetNews(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewGetNewsRequest(c.Server)
+func (c *Client) GetNews(ctx context.Context, params *GetNewsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetNewsRequest(c.Server, params)
 	if err != nil {
 		return nil, err
 	}
@@ -129,7 +138,7 @@ func (c *Client) GetNews(ctx context.Context, reqEditors ...RequestEditorFn) (*h
 }
 
 // NewGetNewsRequest generates requests for GetNews
-func NewGetNewsRequest(server string) (*http.Request, error) {
+func NewGetNewsRequest(server string, params *GetNewsParams) (*http.Request, error) {
 	var err error
 
 	serverURL, err := url.Parse(server)
@@ -146,6 +155,74 @@ func NewGetNewsRequest(server string) (*http.Request, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	queryValues := queryURL.Query()
+
+	if params.Limit != nil {
+
+		if queryFrag, err := runtime.StyleParamWithLocation("form", true, "limit", runtime.ParamLocationQuery, *params.Limit); err != nil {
+			return nil, err
+		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+			return nil, err
+		} else {
+			for k, v := range parsed {
+				for _, v2 := range v {
+					queryValues.Add(k, v2)
+				}
+			}
+		}
+
+	}
+
+	if params.Page != nil {
+
+		if queryFrag, err := runtime.StyleParamWithLocation("form", true, "page", runtime.ParamLocationQuery, *params.Page); err != nil {
+			return nil, err
+		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+			return nil, err
+		} else {
+			for k, v := range parsed {
+				for _, v2 := range v {
+					queryValues.Add(k, v2)
+				}
+			}
+		}
+
+	}
+
+	if params.Status != nil {
+
+		if queryFrag, err := runtime.StyleParamWithLocation("form", true, "status", runtime.ParamLocationQuery, *params.Status); err != nil {
+			return nil, err
+		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+			return nil, err
+		} else {
+			for k, v := range parsed {
+				for _, v2 := range v {
+					queryValues.Add(k, v2)
+				}
+			}
+		}
+
+	}
+
+	if params.Topic != nil {
+
+		if queryFrag, err := runtime.StyleParamWithLocation("form", true, "topic", runtime.ParamLocationQuery, *params.Topic); err != nil {
+			return nil, err
+		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+			return nil, err
+		} else {
+			for k, v := range parsed {
+				for _, v2 := range v {
+					queryValues.Add(k, v2)
+				}
+			}
+		}
+
+	}
+
+	queryURL.RawQuery = queryValues.Encode()
 
 	req, err := http.NewRequest("GET", queryURL.String(), nil)
 	if err != nil {
@@ -199,7 +276,7 @@ func WithBaseURL(baseURL string) ClientOption {
 // ClientWithResponsesInterface is the interface specification for the client with responses above.
 type ClientWithResponsesInterface interface {
 	// GetNews request
-	GetNewsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetNewsResponse, error)
+	GetNewsWithResponse(ctx context.Context, params *GetNewsParams, reqEditors ...RequestEditorFn) (*GetNewsResponse, error)
 }
 
 type GetNewsResponse struct {
@@ -226,8 +303,8 @@ func (r GetNewsResponse) StatusCode() int {
 }
 
 // GetNewsWithResponse request returning *GetNewsResponse
-func (c *ClientWithResponses) GetNewsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetNewsResponse, error) {
-	rsp, err := c.GetNews(ctx, reqEditors...)
+func (c *ClientWithResponses) GetNewsWithResponse(ctx context.Context, params *GetNewsParams, reqEditors ...RequestEditorFn) (*GetNewsResponse, error) {
+	rsp, err := c.GetNews(ctx, params, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
@@ -270,17 +347,18 @@ func ParseGetNewsResponse(rsp *http.Response) (*GetNewsResponse, error) {
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"H4sIAAAAAAAC/6xUQU/cPBD9K9Z8n8QlSkK5+dRt2SKqQiUWqQeEVl5nNjFN7NSesEWr/Pdq7LAsrKgQ",
-	"6i32zLz35s3EW9Cu651FSwHkFjyG3tmA8XCKazW0NPfeeT5rZwkt8afq+9ZoRcbZ4i44y3dBN9gp/vrf",
-	"4xok/Fc8gRcpGoqIdjXRwDiOGVQYtDc9g4GEmajRojdaIKcKv8vNHhUtBq0xhH+m6SwR/k3VxCw6DEHV",
-	"KDYNWqGscD36SCkCi8IqABdPyEz8vGG5hd5zERmcGqji7XO6WCT0EMh1kw+cyCSNUEEcYadMuzR2OQQ8",
-	"ggzooUeQEMgbW7NVk9BD6JnYOwu1cgMJajCxHCKNGXj8NRiPFcibHWyWhN/u8t3qDjUx80s3D1rek/Y2",
-	"skMWthj14A09LNjqBPwJlUc/G6jh0yqevjjfKQIJX39cwzQYRkrRp34boj4NHn8TeqvaU6fDoX2cF2RR",
-	"1IaaYZVr1xXr1m30z8LiJiwD+nujcVlV1bJ2rbJ1cTWfnV7M866CDAbfvgeDbTV27R43Xum48XEJQMLa",
-	"+M5Yl+tG2VpZ87HmAOPCwSJf4iaIRWKADFqjcRqSVdGYi/Pr9wstvp1/nl8uYrdjBoS+C9/Xj3Tv6TwD",
-	"MtRy7X4GZHCPPqSWyrzMj5nO9WhVb0DCSV7mJ5BBr6iJQ4z4/FFjtG73355XIOEMiX2B7PkD+KEsX3s6",
-	"dnnFizcpGh5v3lyaHti400PXKf+QFAmbJJGqA/8NUeHtmHbfc/sgb7Z7k5JF0Tqt2sYFkidlWcKYvR4/",
-	"5vjt+CcAAP//ILLnbQIGAAA=",
+	"H4sIAAAAAAAC/6xVQW/zNgz9KwI3oBcjdtebT8vWrOiwdkBTYIciCBSZsdVZkitRTYMg/32g7KRJ0xZd",
+	"8d1MkXyPfKTkDShnOmfRUoByAx5D52zAZFziUsaWJt47z7ZyltASf8qua7WSpJ3NH4OzfBZUg0by188e",
+	"l1DCT/kreN57Q57Q7gYa2G63GVQYlNcdg0EJY1GjRa+VQA4Vfh+b7SqaRqUwhB9W01VP+FlVA7MwGIKs",
+	"UawatEJa4Tr0iVIELgqrAJw8IDPxccPlBjrPSaRxaKBKp8d0KUmoGMiZQQcOZJJGyCDO0EjdzrWdx4Bn",
+	"kAGtO4QSAnlta5ZqKPQUeiwObCEXLpKgBnuWU6RtBh6fovZYQfmwh836wmf7eLd4REXM/FbNk5YPSvsa",
+	"2SkLS4wqek3rKUvdA/+G0qMfR2rYWiTrD+eNJCjhz3/uYRgMI/Xe134boq4fPL4QeivbS6fCqXwcF8o8",
+	"rzU1cTFSzuTL1q3Uv7nFVZgH9M9a4byqqnntWmnr/G4yvryZjEwFGUTffgeDZdV26XYbL1Xa+LQEUMJS",
+	"e6OtG6lG2lpa/WvNDsaFk0W+xVUQ054BMmi1wmFIViZhbq7vv19o/tf175Pbaep2mwGhN+Hv5Y7uO51n",
+	"QJpazj2MgAye0Ye+pWJUjM6ZznVoZaehhItRMbqADDpJTRpiwuePGpN0+3t7XUEJV0isS0rw0iChD1A+",
+	"bEAz/lNEv4ZsJ1CrjabdKqW3xcgXbaKB8rwoMjDaDtZ+uWw0C/S8tu9Ddv2VOkD8/xiBJMVwhHJyu97P",
+	"JNdp9WniLDv+M/xSFB+9qfu4/M1jnTYxnXw5tf/zpMsejZF+3Y9K2H5WJGueUlppmG37R8E/72b3usJl",
+	"nrdOybZxgcqLoiiApfjIf87+2fa/AAAA//+tUw5DGwcAAA==",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file
