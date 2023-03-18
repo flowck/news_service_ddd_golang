@@ -2,12 +2,13 @@ package transaction
 
 import (
 	"context"
-
-	"github.com/flowck/news_service_ddd_golang/internal/common/logs"
-
-	"github.com/flowck/news_service_ddd_golang/internal/app/commands"
+	"database/sql"
 
 	"github.com/volatiletech/sqlboiler/v4/boil"
+
+	"github.com/flowck/news_service_ddd_golang/internal/adapters/newsarticles"
+	"github.com/flowck/news_service_ddd_golang/internal/app/commands"
+	"github.com/flowck/news_service_ddd_golang/internal/common/logs"
 )
 
 type SQLProvider struct {
@@ -26,15 +27,19 @@ func (p SQLProvider) Transact(ctx context.Context, f commands.TransactFunc) erro
 		return err
 	}
 
-	adapters := commands.TransactableAdapters{}
+	newsRepository, err := newsarticles.NewPsqlRepository(tx)
+	if err != nil {
+		mustRollbackTx(tx, err)
+		return err
+	}
+
+	adapters := commands.TransactableAdapters{
+		NewsRepository: newsRepository,
+	}
 
 	err = f(adapters)
 	if err != nil {
-		rollbackErr := tx.Rollback()
-		if rollbackErr != nil {
-			// p.logger.WithError(err).WithField("rollback_err", rollbackErr).Error("Rollback error")
-			logs.Error("rollback error")
-		}
+		mustRollbackTx(tx, err)
 		return err
 	}
 
@@ -44,4 +49,12 @@ func (p SQLProvider) Transact(ctx context.Context, f commands.TransactFunc) erro
 	}
 
 	return nil
+}
+
+func mustRollbackTx(tx *sql.Tx, err error) {
+	if rollbackErr := tx.Rollback(); rollbackErr != nil {
+		// p.logger.WithError(err).WithField("rollback_err", rollbackErr).Error("Rollback error")
+		logs.Errorf("tx failed due to: %v", err)
+		logs.Errorf("rollback error: %v", rollbackErr)
+	}
 }

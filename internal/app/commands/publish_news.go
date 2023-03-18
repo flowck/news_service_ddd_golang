@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/flowck/news_service_ddd_golang/internal/domain"
-
 	"github.com/flowck/news_service_ddd_golang/internal/domain/news"
 )
 
@@ -13,12 +12,21 @@ type PublishNews struct {
 	TopicIds []domain.ID
 }
 
-type publishNewsHandler struct{}
+type publishNewsHandler struct {
+	txProvider TransactionProvider
+}
 
-func NewPublishNewsHandler() publishNewsHandler {
-	return publishNewsHandler{}
+func NewPublishNewsHandler(txProvider TransactionProvider) publishNewsHandler {
+	return publishNewsHandler{txProvider: txProvider}
 }
 
 func (p publishNewsHandler) Execute(ctx context.Context, cmd PublishNews) error {
-	return nil
+	return p.txProvider.Transact(ctx, func(adapters TransactableAdapters) error {
+		err := adapters.NewsRepository.Insert(ctx, cmd.News, cmd.TopicIds)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
 }
