@@ -73,14 +73,14 @@ var TopicWhere = struct {
 
 // TopicRels is where relationship names are stored.
 var TopicRels = struct {
-	NewsArticlesTopics string
+	NewsArticles string
 }{
-	NewsArticlesTopics: "NewsArticlesTopics",
+	NewsArticles: "NewsArticles",
 }
 
 // topicR is where relationships are stored.
 type topicR struct {
-	NewsArticlesTopics NewsArticlesTopicSlice `boil:"NewsArticlesTopics" json:"NewsArticlesTopics" toml:"NewsArticlesTopics" yaml:"NewsArticlesTopics"`
+	NewsArticles NewsArticleSlice `boil:"NewsArticles" json:"NewsArticles" toml:"NewsArticles" yaml:"NewsArticles"`
 }
 
 // NewStruct creates a new relationship struct
@@ -88,11 +88,11 @@ func (*topicR) NewStruct() *topicR {
 	return &topicR{}
 }
 
-func (r *topicR) GetNewsArticlesTopics() NewsArticlesTopicSlice {
+func (r *topicR) GetNewsArticles() NewsArticleSlice {
 	if r == nil {
 		return nil
 	}
-	return r.NewsArticlesTopics
+	return r.NewsArticles
 }
 
 // topicL is where Load methods for each relationship are stored.
@@ -384,23 +384,24 @@ func (q topicQuery) Exists(ctx context.Context, exec boil.ContextExecutor) (bool
 	return count > 0, nil
 }
 
-// NewsArticlesTopics retrieves all the news_articles_topic's NewsArticlesTopics with an executor.
-func (o *Topic) NewsArticlesTopics(mods ...qm.QueryMod) newsArticlesTopicQuery {
+// NewsArticles retrieves all the news_article's NewsArticles with an executor.
+func (o *Topic) NewsArticles(mods ...qm.QueryMod) newsArticleQuery {
 	var queryMods []qm.QueryMod
 	if len(mods) != 0 {
 		queryMods = append(queryMods, mods...)
 	}
 
 	queryMods = append(queryMods,
+		qm.InnerJoin("\"news_articles_topics\" on \"news_articles\".\"id\" = \"news_articles_topics\".\"news_article_id\""),
 		qm.Where("\"news_articles_topics\".\"topic_id\"=?", o.ID),
 	)
 
-	return NewsArticlesTopics(queryMods...)
+	return NewsArticles(queryMods...)
 }
 
-// LoadNewsArticlesTopics allows an eager lookup of values, cached into the
+// LoadNewsArticles allows an eager lookup of values, cached into the
 // loaded structs of the objects. This is for a 1-M or N-M relationship.
-func (topicL) LoadNewsArticlesTopics(ctx context.Context, e boil.ContextExecutor, singular bool, maybeTopic interface{}, mods queries.Applicator) error {
+func (topicL) LoadNewsArticles(ctx context.Context, e boil.ContextExecutor, singular bool, maybeTopic interface{}, mods queries.Applicator) error {
 	var slice []*Topic
 	var object *Topic
 
@@ -454,8 +455,10 @@ func (topicL) LoadNewsArticlesTopics(ctx context.Context, e boil.ContextExecutor
 	}
 
 	query := NewQuery(
-		qm.From(`news_articles_topics`),
-		qm.WhereIn(`news_articles_topics.topic_id in ?`, args...),
+		qm.Select("\"news_articles\".\"id\", \"news_articles\".\"title\", \"news_articles\".\"slug\", \"news_articles\".\"content\", \"news_articles\".\"status\", \"news_articles\".\"published_at\", \"news_articles\".\"last_edited_at\", \"a\".\"topic_id\""),
+		qm.From("\"news_articles\""),
+		qm.InnerJoin("\"news_articles_topics\" as \"a\" on \"news_articles\".\"id\" = \"a\".\"news_article_id\""),
+		qm.WhereIn("\"a\".\"topic_id\" in ?", args...),
 	)
 	if mods != nil {
 		mods.Apply(query)
@@ -463,22 +466,36 @@ func (topicL) LoadNewsArticlesTopics(ctx context.Context, e boil.ContextExecutor
 
 	results, err := query.QueryContext(ctx, e)
 	if err != nil {
-		return errors.Wrap(err, "failed to eager load news_articles_topics")
+		return errors.Wrap(err, "failed to eager load news_articles")
 	}
 
-	var resultSlice []*NewsArticlesTopic
-	if err = queries.Bind(results, &resultSlice); err != nil {
-		return errors.Wrap(err, "failed to bind eager loaded slice news_articles_topics")
+	var resultSlice []*NewsArticle
+
+	var localJoinCols []string
+	for results.Next() {
+		one := new(NewsArticle)
+		var localJoinCol string
+
+		err = results.Scan(&one.ID, &one.Title, &one.Slug, &one.Content, &one.Status, &one.PublishedAt, &one.LastEditedAt, &localJoinCol)
+		if err != nil {
+			return errors.Wrap(err, "failed to scan eager loaded results for news_articles")
+		}
+		if err = results.Err(); err != nil {
+			return errors.Wrap(err, "failed to plebian-bind eager loaded slice news_articles")
+		}
+
+		resultSlice = append(resultSlice, one)
+		localJoinCols = append(localJoinCols, localJoinCol)
 	}
 
 	if err = results.Close(); err != nil {
-		return errors.Wrap(err, "failed to close results in eager load on news_articles_topics")
+		return errors.Wrap(err, "failed to close results in eager load on news_articles")
 	}
 	if err = results.Err(); err != nil {
-		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for news_articles_topics")
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for news_articles")
 	}
 
-	if len(newsArticlesTopicAfterSelectHooks) != 0 {
+	if len(newsArticleAfterSelectHooks) != 0 {
 		for _, obj := range resultSlice {
 			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
 				return err
@@ -486,24 +503,25 @@ func (topicL) LoadNewsArticlesTopics(ctx context.Context, e boil.ContextExecutor
 		}
 	}
 	if singular {
-		object.R.NewsArticlesTopics = resultSlice
+		object.R.NewsArticles = resultSlice
 		for _, foreign := range resultSlice {
 			if foreign.R == nil {
-				foreign.R = &newsArticlesTopicR{}
+				foreign.R = &newsArticleR{}
 			}
-			foreign.R.Topic = object
+			foreign.R.Topics = append(foreign.R.Topics, object)
 		}
 		return nil
 	}
 
-	for _, foreign := range resultSlice {
+	for i, foreign := range resultSlice {
+		localJoinCol := localJoinCols[i]
 		for _, local := range slice {
-			if local.ID == foreign.TopicID {
-				local.R.NewsArticlesTopics = append(local.R.NewsArticlesTopics, foreign)
+			if local.ID == localJoinCol {
+				local.R.NewsArticles = append(local.R.NewsArticles, foreign)
 				if foreign.R == nil {
-					foreign.R = &newsArticlesTopicR{}
+					foreign.R = &newsArticleR{}
 				}
-				foreign.R.Topic = local
+				foreign.R.Topics = append(foreign.R.Topics, local)
 				break
 			}
 		}
@@ -512,57 +530,149 @@ func (topicL) LoadNewsArticlesTopics(ctx context.Context, e boil.ContextExecutor
 	return nil
 }
 
-// AddNewsArticlesTopics adds the given related objects to the existing relationships
+// AddNewsArticles adds the given related objects to the existing relationships
 // of the topic, optionally inserting them as new records.
-// Appends related to o.R.NewsArticlesTopics.
-// Sets related.R.Topic appropriately.
-func (o *Topic) AddNewsArticlesTopics(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*NewsArticlesTopic) error {
+// Appends related to o.R.NewsArticles.
+// Sets related.R.Topics appropriately.
+func (o *Topic) AddNewsArticles(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*NewsArticle) error {
 	var err error
 	for _, rel := range related {
 		if insert {
-			rel.TopicID = o.ID
 			if err = rel.Insert(ctx, exec, boil.Infer()); err != nil {
 				return errors.Wrap(err, "failed to insert into foreign table")
 			}
-		} else {
-			updateQuery := fmt.Sprintf(
-				"UPDATE \"news_articles_topics\" SET %s WHERE %s",
-				strmangle.SetParamNames("\"", "\"", 1, []string{"topic_id"}),
-				strmangle.WhereClause("\"", "\"", 2, newsArticlesTopicPrimaryKeyColumns),
-			)
-			values := []interface{}{o.ID, rel.ID}
-
-			if boil.IsDebug(ctx) {
-				writer := boil.DebugWriterFrom(ctx)
-				fmt.Fprintln(writer, updateQuery)
-				fmt.Fprintln(writer, values)
-			}
-			if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
-				return errors.Wrap(err, "failed to update foreign table")
-			}
-
-			rel.TopicID = o.ID
 		}
 	}
 
+	for _, rel := range related {
+		query := "insert into \"news_articles_topics\" (\"topic_id\", \"news_article_id\") values ($1, $2)"
+		values := []interface{}{o.ID, rel.ID}
+
+		if boil.IsDebug(ctx) {
+			writer := boil.DebugWriterFrom(ctx)
+			fmt.Fprintln(writer, query)
+			fmt.Fprintln(writer, values)
+		}
+		_, err = exec.ExecContext(ctx, query, values...)
+		if err != nil {
+			return errors.Wrap(err, "failed to insert into join table")
+		}
+	}
 	if o.R == nil {
 		o.R = &topicR{
-			NewsArticlesTopics: related,
+			NewsArticles: related,
 		}
 	} else {
-		o.R.NewsArticlesTopics = append(o.R.NewsArticlesTopics, related...)
+		o.R.NewsArticles = append(o.R.NewsArticles, related...)
 	}
 
 	for _, rel := range related {
 		if rel.R == nil {
-			rel.R = &newsArticlesTopicR{
-				Topic: o,
+			rel.R = &newsArticleR{
+				Topics: TopicSlice{o},
 			}
 		} else {
-			rel.R.Topic = o
+			rel.R.Topics = append(rel.R.Topics, o)
 		}
 	}
 	return nil
+}
+
+// SetNewsArticles removes all previously related items of the
+// topic replacing them completely with the passed
+// in related items, optionally inserting them as new records.
+// Sets o.R.Topics's NewsArticles accordingly.
+// Replaces o.R.NewsArticles with related.
+// Sets related.R.Topics's NewsArticles accordingly.
+func (o *Topic) SetNewsArticles(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*NewsArticle) error {
+	query := "delete from \"news_articles_topics\" where \"topic_id\" = $1"
+	values := []interface{}{o.ID}
+	if boil.IsDebug(ctx) {
+		writer := boil.DebugWriterFrom(ctx)
+		fmt.Fprintln(writer, query)
+		fmt.Fprintln(writer, values)
+	}
+	_, err := exec.ExecContext(ctx, query, values...)
+	if err != nil {
+		return errors.Wrap(err, "failed to remove relationships before set")
+	}
+
+	removeNewsArticlesFromTopicsSlice(o, related)
+	if o.R != nil {
+		o.R.NewsArticles = nil
+	}
+
+	return o.AddNewsArticles(ctx, exec, insert, related...)
+}
+
+// RemoveNewsArticles relationships from objects passed in.
+// Removes related items from R.NewsArticles (uses pointer comparison, removal does not keep order)
+// Sets related.R.Topics.
+func (o *Topic) RemoveNewsArticles(ctx context.Context, exec boil.ContextExecutor, related ...*NewsArticle) error {
+	if len(related) == 0 {
+		return nil
+	}
+
+	var err error
+	query := fmt.Sprintf(
+		"delete from \"news_articles_topics\" where \"topic_id\" = $1 and \"news_article_id\" in (%s)",
+		strmangle.Placeholders(dialect.UseIndexPlaceholders, len(related), 2, 1),
+	)
+	values := []interface{}{o.ID}
+	for _, rel := range related {
+		values = append(values, rel.ID)
+	}
+
+	if boil.IsDebug(ctx) {
+		writer := boil.DebugWriterFrom(ctx)
+		fmt.Fprintln(writer, query)
+		fmt.Fprintln(writer, values)
+	}
+	_, err = exec.ExecContext(ctx, query, values...)
+	if err != nil {
+		return errors.Wrap(err, "failed to remove relationships before set")
+	}
+	removeNewsArticlesFromTopicsSlice(o, related)
+	if o.R == nil {
+		return nil
+	}
+
+	for _, rel := range related {
+		for i, ri := range o.R.NewsArticles {
+			if rel != ri {
+				continue
+			}
+
+			ln := len(o.R.NewsArticles)
+			if ln > 1 && i < ln-1 {
+				o.R.NewsArticles[i] = o.R.NewsArticles[ln-1]
+			}
+			o.R.NewsArticles = o.R.NewsArticles[:ln-1]
+			break
+		}
+	}
+
+	return nil
+}
+
+func removeNewsArticlesFromTopicsSlice(o *Topic, related []*NewsArticle) {
+	for _, rel := range related {
+		if rel.R == nil {
+			continue
+		}
+		for i, ri := range rel.R.Topics {
+			if o.ID != ri.ID {
+				continue
+			}
+
+			ln := len(rel.R.Topics)
+			if ln > 1 && i < ln-1 {
+				rel.R.Topics[i] = rel.R.Topics[ln-1]
+			}
+			rel.R.Topics = rel.R.Topics[:ln-1]
+			break
+		}
+	}
 }
 
 // Topics retrieves all the records using an executor.

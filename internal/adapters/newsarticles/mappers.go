@@ -19,6 +19,21 @@ func mapNewsToDbModel(n *news.News) *models.NewsArticle {
 	}
 }
 
+func mapNewsListModelToNewsListDomain(rows []*models.NewsArticle) ([]*news.News, error) {
+	result := make([]*news.News, len(rows))
+
+	for i, row := range rows {
+		n, err := mapNewsModelToNewsDomain(row)
+		if err != nil {
+			return nil, err
+		}
+
+		result[i] = n
+	}
+
+	return result, nil
+}
+
 func mapNewsModelToNewsDomain(row *models.NewsArticle) (*news.News, error) {
 	ID, err := domain.NewIDFromString(row.ID)
 	if err != nil {

@@ -25,13 +25,12 @@ CREATE TABLE topics(
 );
 
 CREATE TABLE news_articles_topics(
-    id SERIAL,
     topic_id UUID NOT NULL,
-    news_articles_id UUID NOT NULL,
+    news_article_id UUID NOT NULL,
 
-    CONSTRAINT pk_news_topics_id PRIMARY KEY(id),
+    CONSTRAINT pk_news_topics_id PRIMARY KEY(news_article_id, topic_id),
 
-    CONSTRAINT pk_news_topics_news_id FOREIGN KEY (news_articles_id)
+    CONSTRAINT pk_news_topics_news_id FOREIGN KEY (news_article_id)
         REFERENCES news_articles(id)
         ON DELETE CASCADE,
 

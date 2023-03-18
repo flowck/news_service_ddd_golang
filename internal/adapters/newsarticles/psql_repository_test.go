@@ -8,6 +8,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/flowck/news_service_ddd_golang/internal/app/queries"
+
 	"github.com/stretchr/testify/assert"
 
 	"github.com/gosimple/slug"
@@ -28,7 +30,7 @@ var (
 	testTimeout = time.Minute * 2
 )
 
-func TestLifecycle(t *testing.T) {
+func TestNewsRepositoryLifecycle(t *testing.T) {
 	repo, err := newsarticles.NewPsqlRepository(db)
 	require.Nil(t, err)
 
@@ -46,6 +48,16 @@ func TestLifecycle(t *testing.T) {
 
 	_, err = repo.Find(ctx, domain.NewID())
 	assert.ErrorIs(t, err, news.ErrNewsNotFound)
+
+	t.Run("find_by_filters", func(t *testing.T) {
+		filter01 := fixtureNewsFilters(10, 1, news.StatusPublished.String(), "")
+		paginatedNews, err := repo.FindNewsByFiltersWithPagination(ctx, filter01)
+		require.Nil(t, err)
+
+		for i := range paginatedNews.Data {
+			assert.Equal(t, news.StatusPublished, paginatedNews.Data[i].Status())
+		}
+	})
 
 	// Update
 	n.UnPublish()
@@ -89,4 +101,13 @@ func fixtureNews(t *testing.T) *news.News {
 	require.Nil(t, err)
 
 	return n
+}
+
+func fixtureNewsFilters(limit, page int, status, topic string) queries.NewsFilter {
+	return queries.NewsFilter{
+		Limit:  limit,
+		Page:   page,
+		Status: status,
+		Topic:  topic,
+	}
 }
