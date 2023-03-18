@@ -3,8 +3,9 @@ package psql
 import (
 	"database/sql"
 	"fmt"
-	"github.com/pressly/goose"
 	"os"
+
+	"github.com/pressly/goose"
 )
 
 func Connect(uri string) (*sql.DB, error) {
