@@ -16,6 +16,18 @@ func (h handlers) GetNews(w nethttp.ResponseWriter, r *nethttp.Request, params s
 	reply(w, r, &GenericResponse{"success"})
 }
 
+func (h handlers) GetNewsByID(w nethttp.ResponseWriter, r *nethttp.Request, newsID string) {
+	_, err := domain.NewIDFromString(newsID)
+	if err != nil {
+		reply(w, r, newErrorWithStatus(err, "invalid-news-id", nethttp.StatusBadRequest))
+		return
+	}
+
+	reply(w, r, &GetNewsPayload{
+		Data: mapDomainNewsToResponseNews(&news.News{}),
+	})
+}
+
 func (h handlers) PublishNews(w nethttp.ResponseWriter, r *nethttp.Request) {
 	body := &PublishNewsRequest{}
 	if err := bind(w, r, body); err != nil {
