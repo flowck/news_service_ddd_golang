@@ -18,9 +18,16 @@ func NewUnPublishNewsHandler(txProvider TransactionProvider) unPublishNewsHandle
 	return unPublishNewsHandler{txProvider: txProvider}
 }
 
-func (p unPublishNewsHandler) Execute(ctx context.Context, cmd PublishNews) error {
+func (p unPublishNewsHandler) Execute(ctx context.Context, cmd UnPublishNews) error {
 	return p.txProvider.Transact(ctx, func(adapters TransactableAdapters) error {
-		if err := adapters.NewsRepository.Update(ctx, nil); err != nil {
+		n, err := adapters.NewsRepository.Find(ctx, cmd.ID)
+		if err != nil {
+			return err
+		}
+
+		n.UnPublish()
+
+		if err = adapters.NewsRepository.Update(ctx, n); err != nil {
 			return nil
 		}
 
