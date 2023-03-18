@@ -122,6 +122,12 @@ func registerHandlers(r *chi.Mux, application *app.App, swagger *openapi3.T) {
 		})
 
 		r.Post("/", h.PublishNews)
+
+		r.Route("/{newsID}", func(r chi.Router) {
+			r.Patch("/unpublish", func(w nethttp.ResponseWriter, r *nethttp.Request) {
+				h.UnPublishNews(w, r, chi.URLParam(r, "newsID"))
+			})
+		})
 	})
 }
 
