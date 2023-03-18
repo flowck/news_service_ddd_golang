@@ -35,6 +35,18 @@ type GenericResponse struct {
 	Message string `json:"message"`
 }
 
+// News defines model for News.
+type News struct {
+	Content      string    `json:"content"`
+	Id           string    `json:"id"`
+	LastEditedAt time.Time `json:"lastEditedAt"`
+	PublishedAt  time.Time `json:"publishedAt"`
+	Slug         string    `json:"slug"`
+	Status       string    `json:"status"`
+	Title        string    `json:"title"`
+	Topics       []string  `json:"topics"`
+}
+
 // PublishNewsRequest defines model for PublishNewsRequest.
 type PublishNewsRequest struct {
 	Content     string    `json:"content"`
@@ -50,6 +62,11 @@ type DefaultError = ErrorResponse
 
 // DefaultSuccess defines model for DefaultSuccess.
 type DefaultSuccess = GenericResponse
+
+// GetNewsPayload defines model for GetNewsPayload.
+type GetNewsPayload struct {
+	Data News `json:"data"`
+}
 
 // GetNewsParams defines parameters for GetNews.
 type GetNewsParams struct {
@@ -143,6 +160,9 @@ type ClientInterface interface {
 
 	PublishNews(ctx context.Context, body PublishNewsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// GetNewsByID request
+	GetNewsByID(ctx context.Context, newsID string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// UnPublishNews request
 	UnPublishNews(ctx context.Context, newsID string, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
@@ -173,6 +193,18 @@ func (c *Client) PublishNewsWithBody(ctx context.Context, contentType string, bo
 
 func (c *Client) PublishNews(ctx context.Context, body PublishNewsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewPublishNewsRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetNewsByID(ctx context.Context, newsID string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetNewsByIDRequest(c.Server, newsID)
 	if err != nil {
 		return nil, err
 	}
@@ -330,6 +362,40 @@ func NewPublishNewsRequestWithBody(server string, contentType string, body io.Re
 	return req, nil
 }
 
+// NewGetNewsByIDRequest generates requests for GetNewsByID
+func NewGetNewsByIDRequest(server string, newsID string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "newsID", runtime.ParamLocationPath, newsID)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/news/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewUnPublishNewsRequest generates requests for UnPublishNews
 func NewUnPublishNewsRequest(server string, newsID string) (*http.Request, error) {
 	var err error
@@ -415,6 +481,9 @@ type ClientWithResponsesInterface interface {
 
 	PublishNewsWithResponse(ctx context.Context, body PublishNewsJSONRequestBody, reqEditors ...RequestEditorFn) (*PublishNewsResponse, error)
 
+	// GetNewsByID request
+	GetNewsByIDWithResponse(ctx context.Context, newsID string, reqEditors ...RequestEditorFn) (*GetNewsByIDResponse, error)
+
 	// UnPublishNews request
 	UnPublishNewsWithResponse(ctx context.Context, newsID string, reqEditors ...RequestEditorFn) (*UnPublishNewsResponse, error)
 }
@@ -458,6 +527,31 @@ func (r PublishNewsResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r PublishNewsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetNewsByIDResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *struct {
+		Data News `json:"data"`
+	}
+	JSONDefault *ErrorResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r GetNewsByIDResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetNewsByIDResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -510,6 +604,15 @@ func (c *ClientWithResponses) PublishNewsWithResponse(ctx context.Context, body 
 		return nil, err
 	}
 	return ParsePublishNewsResponse(rsp)
+}
+
+// GetNewsByIDWithResponse request returning *GetNewsByIDResponse
+func (c *ClientWithResponses) GetNewsByIDWithResponse(ctx context.Context, newsID string, reqEditors ...RequestEditorFn) (*GetNewsByIDResponse, error) {
+	rsp, err := c.GetNewsByID(ctx, newsID, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetNewsByIDResponse(rsp)
 }
 
 // UnPublishNewsWithResponse request returning *UnPublishNewsResponse
@@ -580,6 +683,41 @@ func ParsePublishNewsResponse(rsp *http.Response) (*PublishNewsResponse, error) 
 	return response, nil
 }
 
+// ParseGetNewsByIDResponse parses an HTTP response from a GetNewsByIDWithResponse call
+func ParseGetNewsByIDResponse(rsp *http.Response) (*GetNewsByIDResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetNewsByIDResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest struct {
+			Data News `json:"data"`
+		}
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
 // ParseUnPublishNewsResponse parses an HTTP response from a UnPublishNewsWithResponse call
 func ParseUnPublishNewsResponse(rsp *http.Response) (*UnPublishNewsResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -609,21 +747,23 @@ func ParseUnPublishNewsResponse(rsp *http.Response) (*UnPublishNewsResponse, err
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"H4sIAAAAAAAC/6xVUW/bNhD+K8JtQF80S1n2pKelS1ZkWLsh6bCHIgho6iyxE0mFPCY1DP/34UhZtiO5",
-	"aIO8CCKP993dx++OG5BW99agIQ/VBhz63hqPcXGJKxE6unLOOl5LawgN8a/o+05JQcqa4rO3hve8bFEL",
-	"/vvR4Qoq+KHYgxfJ6ouIdjOEge12m0ONXjrVMxhUcJE1aNApmSEfzdx4Nt9ldBukRO9fLad3KeDXshoi",
-	"Zxq9Fw1mTy2aTJjM9uhiyMxzUlh7YOcBmQMfF1xtoHfsRAqHAuq4exwuOmUyeLJ64IEPcpA2Ez57g1qo",
-	"7l6Z++DxDeRA6x6hAk9OmYapGhKdQl9kB+tMLG2gjFpMUaZI2xwcPgTlsIbq0wibp8TvxvN2+RklceTn",
-	"bE5KPkjt24LNRfk7LDvl2w/45G/wIaCnOW5HcUz46ZM/1hfRvrJOC4IKakH4EymNc6T6LjSzaJ4EBT9r",
-	"IkUdzltsr+R1Hd0UoT7hnzaEc2I9YSiBD4nlY8FjQgdBjkueUspVoAxO0fqW1ZsofIvCobsI1PJqGVe/",
-	"77j649+PMGidkZJ1z1tL1Kdewi+Ezoju0ko/VSSf81VRNIrasFxIq4tVZ5/kf4XBJ3/v0T0qifd1Xd83",
-	"thOmKW6uLi7fXy10DTkE170Eg6lVZmV3OhEy6iD2FVSwUk4rYxeyFaYRRv3asIFxYTIbWIPZbYoAOXRK",
-	"4qB7IyIx768/vjzR4s/r364+3MZqWQ7otP9rtQv3kspHTcLhCcjhEZ1PJZWLcnHG4WyPRvQKKjhflItz",
-	"VpGgNl5ixOefBiN14yi8rqGCd0jMS3RwQiOh81B92oBi/IeAbg35jqBOaUU7KcVxrcUXpYOG6qwsc9DK",
-	"DKtRXCboJTqW7Txkn6bUAeL3Y4xNtEeZDKx5z9h1X3W8y48f25/L8tQzNZ4rnr1/UYlx55td02Memz1o",
-	"Ldw6XVVm0l2RaPiWoqThjsek9TOXezB8IQ0k9PTW1utXe5Jnxvv2ePiRC7idkPjLdLzE9hxn32uRNiR4",
-	"grhtntqj2PD3+nJbBDOkEJ8pQbKd0vqPOSZ2rnO4/fY6S+jwnJfvE94pzsaUX4+1scJTvMVXyD3uSt7P",
-	"zKooOitF11pP1XlZlsC9d8p+xva77f8BAAD//zx5z1TfCgAA",
+	"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",
+	"SJ9kDgAA",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

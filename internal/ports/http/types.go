@@ -8,6 +8,7 @@ import (
 
 type GenericResponse static.GenericResponse
 type PublishNewsRequest static.PublishNewsRequest
+type GetNewsPayload static.GetNewsPayload
 
 type ErrResponse struct {
 	Err     error  `json:"-"`
@@ -22,6 +23,10 @@ func (e ErrResponse) Render(w http.ResponseWriter, r *http.Request) error {
 }
 
 func (s GenericResponse) Render(w http.ResponseWriter, r *http.Request) error {
+	return nil
+}
+
+func (s GetNewsPayload) Render(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 

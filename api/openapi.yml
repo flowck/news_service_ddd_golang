@@ -67,6 +67,23 @@ paths:
           $ref: '#/components/responses/DefaultSuccess'
         default:
           $ref: '#/components/responses/DefaultError'
+  /news/{newsID}:
+    get:
+      tags:
+        - News
+      summary: Get news
+      operationId: getNewsByID
+      parameters:
+        - name: newsID
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          $ref: '#/components/responses/GetNewsPayload'
+        default:
+          $ref: '#/components/responses/DefaultError'
   /news/{newsID}/unpublish:
     patch:
       tags:
@@ -109,7 +126,9 @@ components:
         status:
           type: string
         topics:
-          type: string
+          type: array
+          items:
+            type: string
         publishedAt:
           type: string
           format: date-time
@@ -164,9 +183,7 @@ components:
             required: [ data ]
             properties:
               data:
-                type: array
-                items:
-                  $ref: "#/components/schemas/News"
+                $ref: "#/components/schemas/News"
     UnauthorizedError:
       description: 'Usually causes by an authentication token missing'
       content:
