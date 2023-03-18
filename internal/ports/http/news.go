@@ -3,6 +3,8 @@ package http
 import (
 	nethttp "net/http"
 
+	"github.com/flowck/news_service_ddd_golang/internal/app/queries"
+
 	"github.com/friendsofgo/errors"
 
 	"github.com/flowck/news_service_ddd_golang/internal/app/commands"
@@ -17,14 +19,20 @@ func (h handlers) GetNews(w nethttp.ResponseWriter, r *nethttp.Request, params s
 }
 
 func (h handlers) GetNewsByID(w nethttp.ResponseWriter, r *nethttp.Request, newsID string) {
-	_, err := domain.NewIDFromString(newsID)
+	ID, err := domain.NewIDFromString(newsID)
 	if err != nil {
 		reply(w, r, newErrorWithStatus(err, "invalid-news-id", nethttp.StatusBadRequest))
 		return
 	}
 
+	n, err := h.application.Queries.NewsByID.Execute(r.Context(), queries.NewsByID{ID: ID})
+	if errors.Is(err, news.ErrNewsNotFound) {
+		reply(w, r, newErrorWithStatus(err, "news-not-found", nethttp.StatusNotFound))
+		return
+	}
+
 	reply(w, r, &GetNewsPayload{
-		Data: mapDomainNewsToResponseNews(&news.News{}),
+		Data: mapDomainNewsToResponseNews(n),
 	})
 }
 

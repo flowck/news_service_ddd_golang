@@ -1,8 +1,6 @@
 package http
 
 import (
-	"time"
-
 	"github.com/flowck/news_service_ddd_golang/internal/domain"
 	"github.com/flowck/news_service_ddd_golang/internal/domain/news"
 	"github.com/flowck/news_service_ddd_golang/internal/ports/http/static"
@@ -24,7 +22,7 @@ func mapTopicIdsToDomainIds(topicIds []string) ([]domain.ID, error) {
 }
 
 func mapDomainNewsToResponseNews(n *news.News) static.News {
-	var topics []string
+	topics := make([]string, 1)
 
 	if n.Topics() != nil {
 		topics = mapDomainTopicsToResponse(n.Topics())
@@ -37,8 +35,8 @@ func mapDomainNewsToResponseNews(n *news.News) static.News {
 		Status:       n.Status().String(),
 		Content:      n.Content(),
 		Topics:       topics,
-		LastEditedAt: time.Time{},
-		PublishedAt:  time.Time{},
+		LastEditedAt: n.LastEditedAt(),
+		PublishedAt:  n.PublishedAt(),
 	}
 }
 
