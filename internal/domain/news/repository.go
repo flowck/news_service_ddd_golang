@@ -8,4 +8,5 @@ import (
 
 type Repository interface {
 	Insert(ctx context.Context, n *News, topicIDs []domain.ID) error
+	Update(ctx context.Context, n *News) error
 }

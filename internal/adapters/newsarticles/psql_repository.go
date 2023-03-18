@@ -24,6 +24,16 @@ func NewPsqlRepository(db boil.ContextExecutor) (psqlRepository, error) {
 	return psqlRepository{db: db}, nil
 }
 
+func (p psqlRepository) Update(ctx context.Context, n *news.News) error {
+	row := mapNewsToDbModel(n)
+
+	if _, err := row.Update(ctx, p.db, boil.Infer()); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (p psqlRepository) Insert(ctx context.Context, n *news.News, topicIDs []domain.ID) error {
 	row := mapNewsToDbModel(n)
 
