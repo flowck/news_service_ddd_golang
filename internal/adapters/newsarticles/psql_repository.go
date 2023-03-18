@@ -5,13 +5,14 @@ import (
 	"database/sql"
 	"errors"
 
+	"github.com/volatiletech/null/v8"
+	"github.com/volatiletech/sqlboiler/v4/boil"
+	"github.com/volatiletech/sqlboiler/v4/queries/qm"
+
 	"github.com/flowck/news_service_ddd_golang/internal/adapters/models"
 	"github.com/flowck/news_service_ddd_golang/internal/app/queries"
 	"github.com/flowck/news_service_ddd_golang/internal/domain"
 	"github.com/flowck/news_service_ddd_golang/internal/domain/news"
-	"github.com/volatiletech/null/v8"
-	"github.com/volatiletech/sqlboiler/v4/boil"
-	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
 
 var _ news.Repository = (*psqlRepository)(nil)
