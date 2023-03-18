@@ -111,11 +111,10 @@ func registerHandlers(r *chi.Mux, application *app.App, swagger *openapi3.T) {
 
 	r.Route("/news", func(r chi.Router) {
 		r.Get("/", func(w nethttp.ResponseWriter, rq *nethttp.Request) {
-			params := static.GetNewsParams{
-				// Limit:  toPtr(rq.URL.Query().Get("limit")),
-				// Page:   toPtr(rq.URL.Query().Get("page")),
-				Status: toPtr(rq.URL.Query().Get("status")),
-				Topic:  toPtr(rq.URL.Query().Get("topic")),
+			params, err := mapRequestQueryToPaginationParams(rq)
+			if err != nil {
+				reply(w, rq, newErrorWithStatus(err, "invalid-query", nethttp.StatusBadRequest))
+				return
 			}
 
 			h.GetNews(w, rq, params)
@@ -133,10 +132,6 @@ func registerHandlers(r *chi.Mux, application *app.App, swagger *openapi3.T) {
 			})
 		})
 	})
-}
-
-func toPtr[V any](v V) *V {
-	return &v
 }
 
 // func strToFloat(value string) float32 {}
