@@ -42,3 +42,7 @@ func NewSlugFromString(value string) (Slug, error) {
 func (s Slug) IsEmpty() bool {
 	return s.value == ""
 }
+
+func (s Slug) String() string {
+	return s.value
+}

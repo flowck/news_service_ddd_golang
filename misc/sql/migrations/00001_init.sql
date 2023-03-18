@@ -1,48 +1,52 @@
 -- +goose Up
 -- +goose StatementBegin
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-CREATE TYPE NEWS_STATUS as ENUM ('draft', 'published', 'scheduled');
+CREATE TYPE NEWS_ARTICLES_STATUS as ENUM ('draft', 'published', 'scheduled');
 
-CREATE TABLE news(
+CREATE TABLE news_articles(
     id UUID DEFAULT gen_random_uuid(),
-    title VARCHAR(250),
-    slug VARCHAR(250),
+    title VARCHAR(250) NOT NULL,
+    slug VARCHAR(250) NOT NULL,
     content TEXT,
-    status VARCHAR(4),
-    publishedAt TIMESTAMPTZ default now(),
-    lastEditedAt TIMESTAMPTZ default now(),
+    status NEWS_ARTICLES_STATUS default 'draft',
+    published_at TIMESTAMPTZ default now(),
+    last_edited_at TIMESTAMPTZ default now(),
 
-    CONSTRAINT pk_news_id PRIMARY KEY(id)
+    CONSTRAINT pk_news_articles_id PRIMARY KEY(id)
 );
 
 CREATE TABLE topics(
     id UUID DEFAULT gen_random_uuid(),
     name VARCHAR(250) NOT NULL,
-    createdAt TIMESTAMPTZ DEFAULT now(),
-    updatedAt TIMESTAMPTZ DEFAULT now(),
+    created_at TIMESTAMPTZ DEFAULT now(),
+    updated_at TIMESTAMPTZ DEFAULT now(),
 
     CONSTRAINT pk_topics_id PRIMARY KEY(id)
 );
 
-CREATE TABLE news_topics(
+CREATE TABLE news_articles_topics(
     id SERIAL,
-    news_id UUID NOT NULL,
     topic_id UUID NOT NULL,
+    news_articles_id UUID NOT NULL,
 
     CONSTRAINT pk_news_topics_id PRIMARY KEY(id),
-    CONSTRAINT pk_news_topics_news_id FOREIGN KEY (news_id) REFERENCES news(id)
+
+    CONSTRAINT pk_news_topics_news_id FOREIGN KEY (news_articles_id)
+        REFERENCES news_articles(id)
         ON DELETE CASCADE,
-    CONSTRAINT pk_news_topics_topic_id FOREIGN KEY (topic_id) REFERENCES topics(id)
+
+    CONSTRAINT pk_news_topics_topic_id FOREIGN KEY (topic_id)
+        REFERENCES topics(id)
         ON DELETE CASCADE
 );
 -- +goose StatementEnd
 
 -- +goose Down
 -- +goose StatementBegin
-DROP TABLE news_topics;
-DROP TABLE news;
+DROP TABLE news_articles_topics;
+DROP TABLE news_articles;
 DROP TABLE topics;
 
 DROP EXTENSION IF EXISTS "uuid-ossp";
-DROP TYPE NEWS_STATUS;
+DROP TYPE NEWS_ARTICLES_STATUS;
 -- +goose StatementEnd
