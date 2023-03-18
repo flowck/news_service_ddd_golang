@@ -101,6 +101,23 @@ paths:
           description: News unpublished
         default:
           $ref: '#/components/responses/DefaultError'
+  /topics:
+    post:
+      tags:
+        - Topics
+      summary: Create a new topic
+      operationId: createTopic
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateTopicRequest"
+      responses:
+        '204':
+          description: Topic created
+        default:
+          $ref: '#/components/responses/DefaultError'
 components:
   schemas:
     News:
@@ -154,6 +171,12 @@ components:
         publishedAt:
           type: string
           format: date-time
+    CreateTopicRequest:
+      type: object
+      required: [ name ]
+      properties:
+        name:
+          type: string
     GenericResponse:
       type: object
       required:

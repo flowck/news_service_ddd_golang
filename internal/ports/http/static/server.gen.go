@@ -19,6 +19,11 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
+// CreateTopicRequest defines model for CreateTopicRequest.
+type CreateTopicRequest struct {
+	Name string `json:"name"`
+}
+
 // ErrorResponse defines model for ErrorResponse.
 type ErrorResponse struct {
 	// Code Error custom error code such as 'email_in_use'
@@ -77,6 +82,9 @@ type GetNewsParams struct {
 // PublishNewsJSONRequestBody defines body for PublishNews for application/json ContentType.
 type PublishNewsJSONRequestBody = PublishNewsRequest
 
+// CreateTopicJSONRequestBody defines body for CreateTopic for application/json ContentType.
+type CreateTopicJSONRequestBody = CreateTopicRequest
+
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
 	// Get news
@@ -91,6 +99,9 @@ type ServerInterface interface {
 	// UnPublish news
 	// (PATCH /news/{newsID}/unpublish)
 	UnPublishNews(w http.ResponseWriter, r *http.Request, newsID string)
+	// Create a new topic
+	// (POST /topics)
+	CreateTopic(w http.ResponseWriter, r *http.Request)
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
@@ -212,6 +223,21 @@ func (siw *ServerInterfaceWrapper) UnPublishNews(w http.ResponseWriter, r *http.
 
 	var handler http.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.UnPublishNews(w, r, newsID)
+	})
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r.WithContext(ctx))
+}
+
+// CreateTopic operation middleware
+func (siw *ServerInterfaceWrapper) CreateTopic(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	var handler http.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateTopic(w, r)
 	})
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -346,6 +372,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	r.Group(func(r chi.Router) {
 		r.Patch(options.BaseURL+"/news/{newsID}/unpublish", wrapper.UnPublishNews)
 	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/topics", wrapper.CreateTopic)
+	})
 
 	return r
 }
@@ -353,23 +382,24 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"H4sIAAAAAAAC/8xWS2/jNhD+KwJbYC+qpTSLHnRq0ngLt90Hki16WAQGTY0lbvlQyGGyRqD/XpCUZcuS",
-	"m0fTxV4MUyS/mfnmmxneE6ZloxUotKS4JwZso5WFsLiANXUC58Zo49dMKwSF/i9tGsEZRa5V9tlq5b9Z",
-	"VoOk/t/3BtakIN9lO/As7tosoF12ZkjbtikpwTLDGw9GCnKWVKDAcJaAP5qY/mxKfgV8B3f2fPOGCwRj",
-	"P9CN0LR8knON0Q0Y5DHGkmL4yhGkfch3b9u7gZsGSEGoMXTj1w2twN/tvnOFUIEJJzVSsfT7AXytjaQY",
-	"j/z0mqRHbxiwTuDj7rQpMXDjuIGSFJ9iREPLh6idx9c9ll59BoZT2Xj/+x7vL0f3wyxPRfVYh9u0cyDY",
-	"HCpu5BLTZfg6hAmXEuYsatkJ0R9MrGN1Qm3yCiTlYsnV0ll4tcuKRcNV5TmTYG2ni0OB760TutIOE6wh",
-	"WhkjHRCxhU2j42NKUhIInIizz9jIV15OfhbU4rzkCOUZDqRYUoQfkEuYCrxxK8Ft/bRLVrhq0geLFJ2d",
-	"3EKOAqZ3dMOZHdT1+MygiA9Y5iXZ4ne+pT2BvU+9nWHMB7xNZehDPO4TdQk3Diw+LV/fCsWL8r+Q/Eh+",
-	"vZFhyBN9ICUWmDMcN1e+8iOF50ANmDOHtV+twurNlqvf/vpIuj7hkeLujrcasYn9Bb4gGEXFhY6SGlaz",
-	"P2eLLKs41m41Y1pma6Hv2N+Zgju7tGBuOYNlWZbLSguqquxyfnbxdj6TXmLOiOdghJpVa73VCWVBB6En",
-	"kYKsuZFc6Rmrqaqo4j9XfsPjklG/9BpMrqIFL13OoGuTigZi3i4+Pt/R7I/FL/N3VyFaLwcw0r5fb809",
-	"J/Jek2T/BEnJLRgbQ8pn+ezEm9MNKNpwUpDTWT47DXMP65DEgO//VBCo85UXRtiiJMV23oULhkrwbw1S",
-	"fLon3OPfODAbkm4JElxy3EopTDdJv3DpJClO8jwlkqtuNTW7pzGb2OL3IJ8B0pfRDmY0W6Zvhrr714vX",
-	"6fCt+GOeH5vr/bns2PMtiDK8NR/GGDxKQ907KanZxKwlKqYNaeUTFkfhte+Y2k7kea8Pk9ibwOK5Ljcv",
-	"9tyd6PTtsA+icdCO2Hw97jShUvs2+FKkdQ4eIa5NY6Vk9/53cdE+VDLnm8XFkbLxtbeTWMQjh0z8X5r7",
-	"alIbMZY51SUtzHiKrB6z96caSvEr8XdMZb3LL6ezPsJjvIURbm63Ie8GTpFlQjMqam2xOM3znPi2dWz/",
-	"xO9ft/8EAAD//1945I3ZDgAA",
+	"H4sIAAAAAAAC/8xX32/bNhD+VwRuQF80S1mKPehpSZMO3tYfSDLsoQgMmjpL7ERSIY9JjUD/+0BSki1L",
+	"TlLPLfZiiOTx49133x3pR8KUqJUEiYZkj0SDqZU04AcXsKK2wkutlXZjpiSCRPdJ67rijCJXMvlslHRz",
+	"hpUgqPv6UcOKZOSHZAOehFWTeLSr9hjSNE1McjBM89qBkYycRQVI0JxF4Ewj3dvG5DfA9/BgztdveYWg",
+	"zUe6rhTNv8q5WqsaNPIQY07Rz3IEYZ7z3Z3t3MB1DSQjVGu6duOaFuD2tvNcIhSgvaVCWi3cugdfKS0o",
+	"BpNfXpN47w4Nxlb4sj1NTDTcWa4hJ9mnENHw5F3U1uPbHkstPwPDqWx8+GOL9+PR/TzLU1G91OEmbh3w",
+	"Z77RQBFuVM3ZFdxZMDj2S1KxnUGDmsti5IS3GjsRk6GoR+hM5X526KnfFDFrUIlW684wMpaVETXRKxCU",
+	"VwsuF9bAq03iO+diIsCYVnq7NbQ1juhSWYywhHDKGGknzA42Do5PBexzNBFnL4qRrzyfnK6owcucI+Rn",
+	"OFB7ThF+Qi5gKvDaLituyq/bZCpbTPpgkKI1k0vIsYLpFacnM2gdY5tBn9hhmeekw299i3sCe5/6c4Yx",
+	"7/A2laGPwdwlaq/qn8rX/4Xief5fSH4hv+6QYcgTrSYmBpjVHNfXrrkECs+BatBnFks3WvrR246r3/++",
+	"IW0rckhhdcNbiViHFgZfELSk1YUKkhpWs7MzWZIUHEu7nDElklWlHtg/iYQHszCg7zmDRZ7ni0JVVBbJ",
+	"1eXZxbvLmXASs7o6BMPXrFypTieUeR34nkQysuJacKlmrKSyoJL/WrgFh0tGLdlpMLoOJzjpcgZtmwxt",
+	"l7yb3xzuaPLn/M3l+2sfrZMDaGE+rLrjDom81yTZtiAxuQdtQkjpLJ2duONUDZLWnGTkdJbOTv3ViqVP",
+	"osd3HwV46lzl+VtynpOsu1L9Bk0FuOcMyT49Eu7w7yzoNYk7giouOHZS8heooF+4sIJkJ2kaE8FlO5p6",
+	"Hkxj1qHFb0EeANKX0QZmdLdM7/R19+TG23j4HP05Tfc9HXq7ZN8L0YvSP2efxxi8e33dWyGoXoesRTKk",
+	"DWnhEhauwlvXMZWZyPNWHyahN4HBc5Wvj/ainuj0zbAPorbQjNh8Pe40vlL7Nngs0loH9xDXxKFSkkf3",
+	"O79oniuZ8/X8Yk/ZuNrbSCzgkV0mvpXmvpvURowlVrZJ83c8RVaO2ftLDqX4nfjbp7Le5ePprI/wCd42",
+	"z7bpct36s/CNynXi78ih5epBIuYBj8Zi8C+ijsSo69IdkzeBvtsmPIf0fSefzeWdJUmlGK1KZTA7TdOU",
+	"uCtg3/qJW79t/g0AAP//KGa82ogQAAA=",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

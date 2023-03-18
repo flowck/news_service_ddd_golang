@@ -66,7 +66,7 @@ func main() {
 			PublishNews:   commands.NewPublishNewsHandler(txProvider),
 			UnPublishNews: commands.NewUnPublishNewsHandler(txProvider),
 			EditNews:      nil,
-			CreateTopic:   nil,
+			CreateTopic:   commands.NewCreateTopicHandler(),
 			RemoveTopic:   nil,
 			EditTopic:     nil,
 		},

@@ -21,7 +21,7 @@ type Commands struct {
 	PublishNews   CommandHandler[commands.PublishNews]
 	UnPublishNews CommandHandler[commands.UnPublishNews]
 	EditNews      CommandHandler[any]
-	CreateTopic   CommandHandler[any]
+	CreateTopic   CommandHandler[commands.CreateTopic]
 	RemoveTopic   CommandHandler[any]
 	EditTopic     CommandHandler[any]
 }
