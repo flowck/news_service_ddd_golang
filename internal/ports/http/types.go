@@ -13,6 +13,7 @@ type GenericResponse struct {
 type PublishNewsRequest static.PublishNewsRequest
 type GetNewsPayload static.GetNewsPayload
 type GetNewsByFiltersPayload static.GetNewsByFiltersPayload
+type CreateTopicRequest static.CreateTopicRequest
 
 type ErrResponse struct {
 	Err     error  `json:"-"`
@@ -39,5 +40,9 @@ func (s GetNewsPayload) Render(w http.ResponseWriter, r *http.Request) error {
 }
 
 func (p PublishNewsRequest) Bind(r *http.Request) error {
+	return nil
+}
+
+func (p CreateTopicRequest) Bind(r *http.Request) error {
 	return nil
 }

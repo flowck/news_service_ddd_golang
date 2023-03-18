@@ -121,7 +121,6 @@ func registerHandlers(r *chi.Mux, application *app.App, swagger *openapi3.T) {
 		})
 
 		r.Post("/", h.PublishNews)
-
 		r.Route("/{newsID}", func(r chi.Router) {
 			r.Get("/", func(w nethttp.ResponseWriter, r *nethttp.Request) {
 				h.GetNewsByID(w, r, chi.URLParam(r, "newsID"))
@@ -131,6 +130,10 @@ func registerHandlers(r *chi.Mux, application *app.App, swagger *openapi3.T) {
 				h.UnPublishNews(w, r, chi.URLParam(r, "newsID"))
 			})
 		})
+	})
+
+	r.Route("/topics", func(r chi.Router) {
+		r.Post("/", h.CreateTopic)
 	})
 }
 
