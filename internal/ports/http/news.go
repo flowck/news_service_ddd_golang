@@ -65,5 +65,5 @@ func (h handlers) PublishNews(w nethttp.ResponseWriter, r *nethttp.Request) {
 		return
 	}
 
-	replyWithStatus(w, r, GenericResponse{}, nethttp.StatusNoContent)
+	replyWithStatus(w, r, GenericResponse{}, nethttp.StatusCreated)
 }
