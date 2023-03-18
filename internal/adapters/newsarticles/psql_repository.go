@@ -5,12 +5,13 @@ import (
 	"database/sql"
 	"errors"
 
-	"github.com/volatiletech/sqlboiler/v4/queries/qm"
-
 	"github.com/flowck/news_service_ddd_golang/internal/adapters/models"
+	"github.com/flowck/news_service_ddd_golang/internal/app/queries"
 	"github.com/flowck/news_service_ddd_golang/internal/domain"
 	"github.com/flowck/news_service_ddd_golang/internal/domain/news"
+	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
+	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
 
 var _ news.Repository = (*psqlRepository)(nil)
@@ -30,7 +31,7 @@ func NewPsqlRepository(db boil.ContextExecutor) (psqlRepository, error) {
 func (p psqlRepository) Find(ctx context.Context, ID domain.ID) (*news.News, error) {
 	mods := []qm.QueryMod{
 		models.NewsArticleWhere.ID.EQ(ID.String()),
-		qm.Load(qm.Rels(models.NewsArticleRels.NewsArticlesTopics, models.NewsArticlesTopicRels.Topic)),
+		qm.Load(models.NewsArticleRels.Topics),
 	}
 	row, err := models.NewsArticles(mods...).One(ctx, p.db)
 
@@ -63,7 +64,7 @@ func (p psqlRepository) Insert(ctx context.Context, n *news.News, topicIDs []dom
 	}
 
 	if topicIDs != nil {
-		err := p.saveNewsArticleTopics(ctx, n.Id(), topicIDs)
+		err := p.setTopicsToNewsArticle(ctx, row, topicIDs)
 		if err != nil {
 			return err
 		}
@@ -72,20 +73,69 @@ func (p psqlRepository) Insert(ctx context.Context, n *news.News, topicIDs []dom
 	return nil
 }
 
-func (p psqlRepository) saveNewsArticleTopics(
+func (p psqlRepository) FindNewsByFiltersWithPagination(
 	ctx context.Context,
-	nID domain.ID,
+	f queries.NewsFilter,
+) (queries.NewsPaginated, error) {
+	mods := []qm.QueryMod{
+		qm.Offset(getPaginationOffset(f.Page, f.Limit)),
+		qm.Load(models.NewsArticleRels.Topics, qm.Where("name ILIKE %?", f.Topic)),
+	}
+
+	if f.Status != "" {
+		mods = append(mods, models.NewsArticleWhere.Status.EQ(null.StringFrom(f.Status)))
+	}
+
+	modsWithLimit := append(mods, qm.Limit(f.Limit))
+	rows, err := models.NewsArticles(modsWithLimit...).All(ctx, p.db)
+	if err != nil {
+		return queries.NewsPaginated{}, err
+	}
+
+	newsList, err := mapNewsListModelToNewsListDomain(rows)
+	if err != nil {
+		return queries.NewsPaginated{}, err
+	}
+
+	totalRows, err := models.NewsArticles(mods...).Count(ctx, p.db)
+	if err != nil {
+		return queries.NewsPaginated{}, err
+	}
+
+	return queries.NewsPaginated{
+		Page:         f.Page,
+		TotalPages:   getTotalPages(totalRows, f.Limit),
+		TotalResults: totalRows,
+		Data:         newsList,
+	}, nil
+}
+
+func getTotalPages(totalRows int64, limit int) int64 {
+	return totalRows / int64(limit)
+}
+
+func getPaginationOffset(page int, limit int) int {
+	return (page - 1) * limit
+}
+
+func (p psqlRepository) setTopicsToNewsArticle(
+	ctx context.Context,
+	newsArticleRow *models.NewsArticle,
 	topicIDs []domain.ID,
 ) error {
-	for i := range topicIDs {
-		row := models.NewsArticlesTopic{
-			TopicID:        topicIDs[i].String(),
-			NewsArticlesID: nID.String(),
-		}
+	rows := make([]*models.Topic, len(topicIDs))
 
-		if err := row.Insert(ctx, p.db, boil.Infer()); err != nil {
+	for i := range topicIDs {
+		row, err := models.FindTopic(ctx, p.db, topicIDs[i].String())
+		if err != nil {
 			return err
 		}
+
+		rows[i] = row
+	}
+
+	if err := newsArticleRow.SetTopics(ctx, p.db, false, rows...); err != nil {
+		return err
 	}
 
 	return nil

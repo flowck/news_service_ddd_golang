@@ -2,8 +2,6 @@ package queries
 
 import (
 	"context"
-
-	"github.com/flowck/news_service_ddd_golang/internal/domain/news"
 )
 
 type NewsByFilters struct {
@@ -18,6 +16,6 @@ func NewNewsByFiltersHandler(readModelRepository NewsReadModel) newsByFiltersHan
 	return newsByFiltersHandler{readModelRepository: readModelRepository}
 }
 
-func (h newsByFiltersHandler) Execute(ctx context.Context, q NewsByFilters) ([]*news.News, error) {
+func (h newsByFiltersHandler) Execute(ctx context.Context, q NewsByFilters) (NewsPaginated, error) {
 	return h.readModelRepository.FindNewsByFiltersWithPagination(ctx, q.Filters)
 }

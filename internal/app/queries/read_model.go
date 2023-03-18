@@ -7,7 +7,7 @@ import (
 )
 
 type NewsReadModel interface {
-	FindNewsByFiltersWithPagination(ctx context.Context, f NewsFilter) ([]*news.News, error)
+	FindNewsByFiltersWithPagination(ctx context.Context, f NewsFilter) (NewsPaginated, error)
 }
 
 type NewsFilter struct {
@@ -16,4 +16,11 @@ type NewsFilter struct {
 
 	Status string
 	Topic  string
+}
+
+type NewsPaginated struct {
+	Page         int
+	TotalPages   int64
+	TotalResults int64
+	Data         []*news.News
 }
