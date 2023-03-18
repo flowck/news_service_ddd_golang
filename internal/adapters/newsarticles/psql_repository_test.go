@@ -8,6 +8,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/gosimple/slug"
 
 	"github.com/brianvoe/gofakeit"
@@ -31,7 +33,18 @@ func TestInsert(t *testing.T) {
 	require.Nil(t, err)
 
 	n := fixtureNews(t)
+	assert.Nil(t, repo.Insert(ctx, n, nil))
+}
+
+func TestUpdate(t *testing.T) {
+	repo, err := newsarticles.NewPsqlRepository(db)
+	require.Nil(t, err)
+
+	n := fixtureNews(t)
 	require.Nil(t, repo.Insert(ctx, n, nil))
+
+	n.UnPublish()
+	assert.Nil(t, repo.Update(ctx, n))
 }
 
 func TestMain(m *testing.M) {

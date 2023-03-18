@@ -50,6 +50,10 @@ func (n *News) LastEditedAt() time.Time {
 	return n.lastEditedAt
 }
 
+func (n *News) UnPublish() {
+	n.status = StatusDraft
+}
+
 func New(
 	id domain.ID,
 	title string,
