@@ -68,10 +68,10 @@ type GetNewsPayload struct {
 
 // GetNewsParams defines parameters for GetNews.
 type GetNewsParams struct {
-	Limit  *float32 `form:"limit,omitempty" json:"limit,omitempty"`
-	Page   *float32 `form:"page,omitempty" json:"page,omitempty"`
-	Status *string  `form:"status,omitempty" json:"status,omitempty"`
-	Topic  *string  `form:"topic,omitempty" json:"topic,omitempty"`
+	Limit  *int    `form:"limit,omitempty" json:"limit,omitempty"`
+	Page   *int    `form:"page,omitempty" json:"page,omitempty"`
+	Status *string `form:"status,omitempty" json:"status,omitempty"`
+	Topic  *string `form:"topic,omitempty" json:"topic,omitempty"`
 }
 
 // PublishNewsJSONRequestBody defines body for PublishNews for application/json ContentType.
@@ -353,23 +353,23 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"H4sIAAAAAAAC/8xWTW/jNhD9KwJbYC+qpTQ96dSkSRduux9ItuhhEQQ0NZa4FUmFHCZrBP7vxZCS/CF5",
-	"N0ndYi+GKXLePL55HPKRCaNao0GjY8Ujs+Baox2EwQUsuW/w0lpjaSyMRtBIf3nbNlJwlEZnn5zR9M2J",
-	"GhSnf99bWLKCfZdtwLM467KAdtWlYev1OmUlOGFlS2CsYGdJBRqsFAnQ0sQOa9Oe0bUXApw7GqfXMeGX",
-	"WHWZEwXO8QqShxp0wnViWrAhZeKIFJSOeL4GfAsP7j1fNYaXz+LZWoJEGUtQcvwqe8rEiLGFOy8tlKz4",
-	"GANvUoarFljBzOITCJza2LvfQ2wHRrl2KzSiJEwZvu7ChKBEeIdGdYWjhaRKnXCXvALFZXMr9a138IoN",
-	"xBxaqSvSrFN2DH2WbI0TvjAeE6whZhkj7QnRw6aR+FgSqtZu+Udb3qL2tGRTWUKZJtQcfDFSRJaTnxvu",
-	"8LKUCOVZiFsaqziygmoOP6BUMCVv6xeNdPXzglzjq0kODjl6NzmFEhuYnjGtFCFIIqgD0fEDt5avRvLK",
-	"kvX4Hbd0EHDgNOTZ3fOeblMVeh+XU6Gu4M6Dw+fV61uReF7+G5GfqC8l2d3yRLdJmQPhrcTVNfWXKOE5",
-	"cAv2zGNNo0UY/dpr9dtfH1jXjQgpzm50qxHb2MXgM4LVvLkw0VK7PYPWuSLLKom1X8yEUdmyMQ/i70zD",
-	"g7t1YO+lgNuyLG8r03BdZVeXZxdvLmeKLOZt8xKMcGb10vQ+4SL4IHQ+VrCltEpqMxM11xXX8ueKJgiX",
-	"jboyeTC5jhnIulJA15k0D8K8mX94OdHsj/kvl2+vw27JDmCVe7fs071k54Mn2fYKlrJ7sC5uKZ/lsxNK",
-	"Z1rQvJWsYKezfHZKLuJYhyIGfPpTQZBuuF3nJSv6WzUEWK4AwTpWfHxkkvDvPNgVS3uBGqkk9lYKd6ji",
-	"n6XyihUneZ4yJXU3GsylvVqAJdtOQ7bxHtlCfD7GcIg2KKMrZToynLovBt6ku++3H/P80NthWJftPamC",
-	"E8OXJ4fG92E47F4pblexVImOtUJeUZXi/XdDbdK4ieJuNV8WGxI4PDfl6mivvIn2vt5tfmg9rEci/jRu",
-	"L+F4Dr3vWKJ1BA8It07j8cge6Xd+sf7aOTlfzS8OnBU6cBtnRTy2r8TRrbb3Kv7PrTZSLPO6K1q42DmK",
-	"eqzen3rXiv+TfodcNlA+ns+GHR7SLdzb9r7f8uaWKbKsMYI3tXFYnOZ5zqhbHZo/ofmb9T8BAAD//8Sk",
-	"SJ9kDgAA",
+	"H4sIAAAAAAAC/8xWTW/jNhD9KwJbYC+qpTQ96VSndhduux9ItuhhERg0NZa4FUmFHCVrBP7vxZCS/CF5",
+	"N0ndYi+GKXLePL55HPKRCaNqo0GjY9kjs+Bqox34wQzWvKlwbq2xNBZGI2ikv7yuKyk4SqOTT85o+uZE",
+	"CYrTv+8trFnGvkt24EmYdYlHu27TsO12G7McnLCyJjCWsWlUgAYrRQS0NLL92rhjdNMIAc6djdPrkPBL",
+	"rNrMkQLneAHRQwk64joyNVifMnJECnJHPF8DvoUH955vKsPzZ/GsLUGiDCXIOX6VPWVixNjCXSMt5Cz7",
+	"GAJvY4abGljGzOoTCBzb2LvffWwLRrkOKzSgJEzuvx7C+KBINA6NagtHC0mVMuIuegWKy2op9bJx8Ir1",
+	"xBxaqQvSrFV2CD2N9sYRX5kGIywhZBkiHQnRwcaB+FASqtZh+Qdb3qP2tGRjWXyZRtTsfTFQROajnyvu",
+	"cJ5LhHzq49bGKo4so5rDDygVjMlbN6tKuvJ5Qa5qilEODjk2bnQKJVYwPmNqKXyQRFAnosMHbi3fDOSV",
+	"OevwW25xL2DPqc9zuOcj3cYq9D4sp0Jdw10DDp9Xr29F4kX+b0R+or6U5HDLI90mZg5EYyVubqi/BAmv",
+	"gFuw0wZLGq386NdOq9/++sDabkRIYXanW4lYhy4GnxGs5tXMBEsd9gxa57IkKSSWzWoijErWlXkQfyca",
+	"HtzSgb2XApZ5ni8LU3FdJNfz6ezNfKLIYo2tXoLhz6xem84nXHgf+M7HMraWVkltJqLkuuBa/lzQBOGy",
+	"QVcmD0Y3IQNZVwpoO5PmXpg3iw8vJ5r8sfhl/vbG75bsAFa5d+su3Ut23nuS7a9gMbsH68KW0kk6uaB0",
+	"pgbNa8kydjlJJ5fkIo6lL6LHpz8FeOn623WRs6y7VX2A5QoQrGPZx0cmCf+uAbthcSdQJZXEzkr+DlX8",
+	"s1SNYtlFmsZMSd2OenNJjVCAJd+OY9bhItmDfAFIf4x2MINLZTzSn7svBt7Ghy+4H9P01OuhX5ccPaq8",
+	"F/2XJ4eGF6I/7o1S3G5CsSIdqoW8oDqFG/CWGqVxI+Xda78stCRweGXyzdneeSMNfnvY/tA2sB2I+NOw",
+	"wfgD2ne/c4nWEjwh3DYOByR5pN/FbPu1k3K1WcxOnBY6cjtnBTx2rMTZrXb0Lv7PrTZQLGl0WzR/tXMU",
+	"5VC9P/WhFf8n/U65rKd8Pp/1Ozylm7+57X235d09kyVJZQSvSuMwu0zTlFG3OjV/QfO3238CAAD//6+S",
+	"nVZmDgAA",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

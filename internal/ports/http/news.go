@@ -3,6 +3,8 @@ package http
 import (
 	nethttp "net/http"
 
+	"github.com/flowck/news_service_ddd_golang/internal/common/logs"
+
 	"github.com/flowck/news_service_ddd_golang/internal/app/queries"
 
 	"github.com/friendsofgo/errors"
@@ -15,6 +17,7 @@ import (
 )
 
 func (h handlers) GetNews(w nethttp.ResponseWriter, r *nethttp.Request, params static.GetNewsParams) {
+	logs.Info(*params.Page, *params.Limit)
 	reply(w, r, &GenericResponse{"success"})
 }
 
