@@ -44,6 +44,9 @@ func TestLifecycle(t *testing.T) {
 	assert.Equal(t, n.Title(), n1.Title())
 	assert.Equal(t, n.Slug(), n1.Slug())
 
+	_, err = repo.Find(ctx, domain.NewID())
+	assert.ErrorIs(t, err, news.ErrNewsNotFound)
+
 	// Update
 	n.UnPublish()
 	assert.Nil(t, repo.Update(ctx, n))
