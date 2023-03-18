@@ -30,3 +30,7 @@ func getClient(t *testing.T) *client.ClientWithResponses {
 
 	return cli
 }
+
+func toPtr[V any](v V) *V {
+	return &v
+}

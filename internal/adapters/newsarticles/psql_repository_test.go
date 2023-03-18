@@ -51,12 +51,16 @@ func TestNewsRepositoryLifecycle(t *testing.T) {
 
 	t.Run("find_by_filters", func(t *testing.T) {
 		filter01 := fixtureNewsFilters(10, 1, news.StatusPublished.String(), "")
-		paginatedNews, err := repo.FindNewsByFiltersWithPagination(ctx, filter01)
+		paginatedNews01, err := repo.FindNewsByFiltersWithPagination(ctx, filter01)
 		require.Nil(t, err)
 
-		for i := range paginatedNews.Data {
-			assert.Equal(t, news.StatusPublished, paginatedNews.Data[i].Status())
+		for i := range paginatedNews01.Data {
+			assert.Equal(t, news.StatusPublished, paginatedNews01.Data[i].Status())
 		}
+
+		filter02 := fixtureNewsFilters(10, 1, "", "")
+		_, err = repo.FindNewsByFiltersWithPagination(ctx, filter02)
+		assert.Nil(t, err)
 	})
 
 	// Update

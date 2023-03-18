@@ -13,7 +13,7 @@ type Slug struct {
 }
 
 func NewSlugFromID(id domain.ID, value string) (Slug, error) {
-	idSubstr := strings.Split(id.String(), "-")[3]
+	idSubstr := strings.Split(id.String(), "-")[4]
 
 	if !slug.IsSlug(value) {
 		return Slug{}, fmt.Errorf("%s is not a valid slug", value)

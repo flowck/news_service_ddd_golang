@@ -71,10 +71,10 @@ func main() {
 			EditTopic:     nil,
 		},
 		Queries: app.Queries{
-			NewsByID:     queries.NewNewsByIdHandler(newsRepository),
-			MultipleNews: nil,
-			Topic:        nil,
-			Topics:       nil,
+			NewsByID:      queries.NewNewsByIdHandler(newsRepository),
+			NewsByFilters: queries.NewNewsByFiltersHandler(newsRepository),
+			Topic:         nil,
+			Topics:        nil,
 		},
 	}
 

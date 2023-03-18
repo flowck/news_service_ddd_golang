@@ -25,6 +25,16 @@ func mapTopicIdsToDomainIds(topicIds []string) ([]domain.ID, error) {
 	return IDs, nil
 }
 
+func mapDomainNewsListToResponseNewsList(newsList []*news.News) []static.News {
+	result := make([]static.News, len(newsList))
+
+	for i := range newsList {
+		result[i] = mapDomainNewsToResponseNews(newsList[i])
+	}
+
+	return result
+}
+
 func mapDomainNewsToResponseNews(n *news.News) static.News {
 	topics := make([]string, 1)
 
