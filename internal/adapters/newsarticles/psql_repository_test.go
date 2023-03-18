@@ -47,6 +47,10 @@ func TestMain(m *testing.M) {
 		log.Fatal(err)
 	}
 
+	if err = psql.ApplyMigrations(db, "../../../misc/sql/migrations"); err != nil {
+		log.Fatal(err)
+	}
+
 	os.Exit(m.Run())
 }
 

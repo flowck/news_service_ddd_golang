@@ -3,6 +3,8 @@ package psql
 import (
 	"database/sql"
 	"fmt"
+	"github.com/pressly/goose"
+	"os"
 )
 
 func Connect(uri string) (*sql.DB, error) {
@@ -16,4 +18,21 @@ func Connect(uri string) (*sql.DB, error) {
 	}
 
 	return db, nil
+}
+
+func ApplyMigrations(db *sql.DB, dir string) error {
+	if err := goose.SetDialect("postgres"); err != nil {
+		return err
+	}
+
+	workdir, err := os.Getwd()
+	if err != nil {
+		panic(err)
+	}
+
+	if err = goose.Up(db, fmt.Sprintf("%s/%s", workdir, dir)); err != nil {
+		return err
+	}
+
+	return nil
 }
