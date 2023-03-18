@@ -2,7 +2,10 @@ package newsarticles
 
 import (
 	"context"
+	"database/sql"
 	"errors"
+
+	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 
 	"github.com/flowck/news_service_ddd_golang/internal/adapters/models"
 	"github.com/flowck/news_service_ddd_golang/internal/domain"
@@ -22,6 +25,24 @@ func NewPsqlRepository(db boil.ContextExecutor) (psqlRepository, error) {
 	}
 
 	return psqlRepository{db: db}, nil
+}
+
+func (p psqlRepository) Find(ctx context.Context, ID domain.ID) (*news.News, error) {
+	mods := []qm.QueryMod{
+		models.NewsArticleWhere.ID.EQ(ID.String()),
+		qm.Load(qm.Rels(models.NewsArticleRels.NewsArticlesTopics, models.NewsArticlesTopicRels.Topic)),
+	}
+	row, err := models.NewsArticles(mods...).One(ctx, p.db)
+
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, news.ErrNewsNotFound
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	return mapNewsModelToNewsDomain(row)
 }
 
 func (p psqlRepository) Update(ctx context.Context, n *news.News) error {

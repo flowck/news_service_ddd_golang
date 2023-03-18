@@ -15,4 +15,5 @@ var (
 type Repository interface {
 	Insert(ctx context.Context, n *News, topicIDs []domain.ID) error
 	Update(ctx context.Context, n *News) error
+	Find(ctx context.Context, ID domain.ID) (*News, error)
 }

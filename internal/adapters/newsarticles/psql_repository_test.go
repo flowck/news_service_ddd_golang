@@ -28,21 +28,26 @@ var (
 	testTimeout = time.Minute * 2
 )
 
-func TestInsert(t *testing.T) {
+func TestLifecycle(t *testing.T) {
 	repo, err := newsarticles.NewPsqlRepository(db)
 	require.Nil(t, err)
 
+	// Insert
 	n := fixtureNews(t)
 	assert.Nil(t, repo.Insert(ctx, n, nil))
-}
 
-func TestUpdate(t *testing.T) {
-	repo, err := newsarticles.NewPsqlRepository(db)
+	// Find
+	n1, err := repo.Find(ctx, n.Id())
 	require.Nil(t, err)
 
-	n := fixtureNews(t)
-	require.Nil(t, repo.Insert(ctx, n, nil))
+	assert.Equal(t, n.Id(), n1.Id())
+	assert.Equal(t, n.Title(), n1.Title())
+	assert.Equal(t, n.Slug(), n1.Slug())
 
+	_, err = repo.Find(ctx, domain.NewID())
+	assert.ErrorIs(t, err, news.ErrNewsNotFound)
+
+	// Update
 	n.UnPublish()
 	assert.Nil(t, repo.Update(ctx, n))
 }
