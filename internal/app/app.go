@@ -27,10 +27,10 @@ type Commands struct {
 }
 
 type Queries struct {
-	NewsByID     QueryHandler[queries.NewsByID, *news.News]
-	MultipleNews QueryHandler[any, any]
-	Topic        QueryHandler[any, any]
-	Topics       QueryHandler[any, any]
+	NewsByID      QueryHandler[queries.NewsByID, *news.News]
+	NewsByFilters QueryHandler[queries.NewsByFilters, queries.NewsPaginated]
+	Topic         QueryHandler[any, any]
+	Topics        QueryHandler[any, any]
 }
 
 type App struct {

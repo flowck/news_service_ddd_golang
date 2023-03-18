@@ -30,11 +30,6 @@ type ErrorResponse struct {
 	Message string `json:"message"`
 }
 
-// GenericResponse defines model for GenericResponse.
-type GenericResponse struct {
-	Message string `json:"message"`
-}
-
 // News defines model for News.
 type News struct {
 	Content      string    `json:"content"`
@@ -60,8 +55,13 @@ type PublishNewsRequest struct {
 // DefaultError defines model for DefaultError.
 type DefaultError = ErrorResponse
 
-// DefaultSuccess defines model for DefaultSuccess.
-type DefaultSuccess = GenericResponse
+// GetNewsByFiltersPayload defines model for GetNewsByFiltersPayload.
+type GetNewsByFiltersPayload struct {
+	Data         []News `json:"data"`
+	Page         int    `json:"page"`
+	TotalPages   int64  `json:"total_pages"`
+	TotalResults int64  `json:"total_results"`
+}
 
 // GetNewsPayload defines model for GetNewsPayload.
 type GetNewsPayload struct {
@@ -491,8 +491,13 @@ type ClientWithResponsesInterface interface {
 type GetNewsResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *GenericResponse
-	JSONDefault  *ErrorResponse
+	JSON200      *struct {
+		Data         []News `json:"data"`
+		Page         int    `json:"page"`
+		TotalPages   int64  `json:"total_pages"`
+		TotalResults int64  `json:"total_results"`
+	}
+	JSONDefault *ErrorResponse
 }
 
 // Status returns HTTPResponse.Status
@@ -639,7 +644,12 @@ func ParseGetNewsResponse(rsp *http.Response) (*GetNewsResponse, error) {
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest GenericResponse
+		var dest struct {
+			Data         []News `json:"data"`
+			Page         int    `json:"page"`
+			TotalPages   int64  `json:"total_pages"`
+			TotalResults int64  `json:"total_results"`
+		}
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -747,23 +757,23 @@ func ParseUnPublishNewsResponse(rsp *http.Response) (*UnPublishNewsResponse, err
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"H4sIAAAAAAAC/8xWTW/jNhD9KwJbYC+qpTQ96VSndhduux9ItuhhERg0NZa4FUmFHCVrBP7vxZCS/CF5",
-	"N0ndYi+GKXLePL55HPKRCaNqo0GjY9kjs+Bqox34wQzWvKlwbq2xNBZGI2ikv7yuKyk4SqOTT85o+uZE",
-	"CYrTv+8trFnGvkt24EmYdYlHu27TsO12G7McnLCyJjCWsWlUgAYrRQS0NLL92rhjdNMIAc6djdPrkPBL",
-	"rNrMkQLneAHRQwk64joyNVifMnJECnJHPF8DvoUH955vKsPzZ/GsLUGiDCXIOX6VPWVixNjCXSMt5Cz7",
-	"GAJvY4abGljGzOoTCBzb2LvffWwLRrkOKzSgJEzuvx7C+KBINA6NagtHC0mVMuIuegWKy2op9bJx8Ir1",
-	"xBxaqQvSrFV2CD2N9sYRX5kGIywhZBkiHQnRwcaB+FASqtZh+Qdb3qP2tGRjWXyZRtTsfTFQROajnyvu",
-	"cJ5LhHzq49bGKo4so5rDDygVjMlbN6tKuvJ5Qa5qilEODjk2bnQKJVYwPmNqKXyQRFAnosMHbi3fDOSV",
-	"OevwW25xL2DPqc9zuOcj3cYq9D4sp0Jdw10DDp9Xr29F4kX+b0R+or6U5HDLI90mZg5EYyVubqi/BAmv",
-	"gFuw0wZLGq386NdOq9/++sDabkRIYXanW4lYhy4GnxGs5tXMBEsd9gxa57IkKSSWzWoijErWlXkQfyca",
-	"HtzSgb2XApZ5ni8LU3FdJNfz6ezNfKLIYo2tXoLhz6xem84nXHgf+M7HMraWVkltJqLkuuBa/lzQBOGy",
-	"QVcmD0Y3IQNZVwpoO5PmXpg3iw8vJ5r8sfhl/vbG75bsAFa5d+su3Ut23nuS7a9gMbsH68KW0kk6uaB0",
-	"pgbNa8kydjlJJ5fkIo6lL6LHpz8FeOn623WRs6y7VX2A5QoQrGPZx0cmCf+uAbthcSdQJZXEzkr+DlX8",
-	"s1SNYtlFmsZMSd2OenNJjVCAJd+OY9bhItmDfAFIf4x2MINLZTzSn7svBt7Ghy+4H9P01OuhX5ccPaq8",
-	"F/2XJ4eGF6I/7o1S3G5CsSIdqoW8oDqFG/CWGqVxI+Xda78stCRweGXyzdneeSMNfnvY/tA2sB2I+NOw",
-	"wfgD2ne/c4nWEjwh3DYOByR5pN/FbPu1k3K1WcxOnBY6cjtnBTx2rMTZrXb0Lv7PrTZQLGl0WzR/tXMU",
-	"5VC9P/WhFf8n/U65rKd8Pp/1Ozylm7+57X235d09kyVJZQSvSuMwu0zTlFG3OjV/QfO3238CAAD//6+S",
-	"nVZmDgAA",
+	"H4sIAAAAAAAC/8xWS2/jNhD+KwJbYC+qpTSLHnRq0ngLt90Hki16WAQGTY0lbvlQyGGyRqD/XpCUZcuS",
+	"m0fTxV4MUyS/mfnmmxneE6ZloxUotKS4JwZso5WFsLiANXUC58Zo49dMKwSF/i9tGsEZRa5V9tlq5b9Z",
+	"VoOk/t/3BtakIN9lO/As7tosoF12ZkjbtikpwTLDGw9GCnKWVKDAcJaAP5qY/mxKfgV8B3f2fPOGCwRj",
+	"P9CN0LR8knON0Q0Y5DHGkmL4yhGkfch3b9u7gZsGSEGoMXTj1w2twN/tvnOFUIEJJzVSsfT7AXytjaQY",
+	"j/z0mqRHbxiwTuDj7rQpMXDjuIGSFJ9iREPLh6idx9c9ll59BoZT2Xj/+x7vL0f3wyxPRfVYh9u0cyDY",
+	"HCpu5BLTZfg6hAmXEuYsatkJ0R9MrGN1Qm3yCiTlYsnV0ll4tcuKRcNV5TmTYG2ni0OB760TutIOE6wh",
+	"WhkjHRCxhU2j42NKUhIInIizz9jIV15OfhbU4rzkCOUZDqRYUoQfkEuYCrxxK8Ft/bRLVrhq0geLFJ2d",
+	"3EKOAqZ3dMOZHdT1+MygiA9Y5iXZ4ne+pT2BvU+9nWHMB7xNZehDPO4TdQk3Diw+LV/fCsWL8r+Q/Eh+",
+	"vZFhyBN9ICUWmDMcN1e+8iOF50ANmDOHtV+twurNlqvf/vpIuj7hkeLujrcasYn9Bb4gGEXFhY6SGlaz",
+	"P2eLLKs41m41Y1pma6Hv2N+Zgju7tGBuOYNlWZbLSguqquxyfnbxdj6TXmLOiOdghJpVa73VCWVBB6En",
+	"kYKsuZFc6Rmrqaqo4j9XfsPjklG/9BpMrqIFL13OoGuTigZi3i4+Pt/R7I/FL/N3VyFaLwcw0r5fb809",
+	"J/Jek2T/BEnJLRgbQ8pn+ezEm9MNKNpwUpDTWT47DXMP65DEgO//VBCo85UXRtiiJMV23oULhkrwbw1S",
+	"fLon3OPfODAbkm4JElxy3EopTDdJv3DpJClO8jwlkqtuNTW7pzGb2OL3IJ8B0pfRDmY0W6Zvhrr714vX",
+	"6fCt+GOeH5vr/bns2PMtiDK8NR/GGDxKQ907KanZxKwlKqYNaeUTFkfhte+Y2k7kea8Pk9ibwOK5Ljcv",
+	"9tyd6PTtsA+icdCO2Hw97jShUvs2+FKkdQ4eIa5NY6Vk9/53cdE+VDLnm8XFkbLxtbeTWMQjh0z8X5r7",
+	"alIbMZY51SUtzHiKrB6z96caSvEr8XdMZb3LL6ezPsJjvIURbm63Ie8GTpFlQjMqam2xOM3znPi2dWz/",
+	"xO9ft/8EAAD//1945I3ZDgAA",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

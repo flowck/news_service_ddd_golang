@@ -80,11 +80,17 @@ func (p psqlRepository) FindNewsByFiltersWithPagination(
 ) (queries.NewsPaginated, error) {
 	mods := []qm.QueryMod{
 		qm.Offset(getPaginationOffset(f.Page, f.Limit)),
-		qm.Load(models.NewsArticleRels.Topics, qm.Where("name ILIKE %?", f.Topic)),
 	}
+	var countMods []qm.QueryMod
 
 	if f.Status != "" {
 		mods = append(mods, models.NewsArticleWhere.Status.EQ(null.StringFrom(f.Status)))
+		countMods = append(countMods, models.NewsArticleWhere.Status.EQ(null.StringFrom(f.Status)))
+	}
+
+	if f.Topic != "" {
+		mods = append(mods, qm.Load(models.NewsArticleRels.Topics, qm.Where("name ILIKE %?", f.Topic)))
+		countMods = append(countMods, qm.Load(models.NewsArticleRels.Topics, qm.Where("name ILIKE %?", f.Topic)))
 	}
 
 	modsWithLimit := append(mods, qm.Limit(f.Limit))
@@ -98,7 +104,7 @@ func (p psqlRepository) FindNewsByFiltersWithPagination(
 		return queries.NewsPaginated{}, err
 	}
 
-	totalRows, err := models.NewsArticles(mods...).Count(ctx, p.db)
+	totalRows, err := models.NewsArticles(countMods...).Count(ctx, p.db)
 	if err != nil {
 		return queries.NewsPaginated{}, err
 	}
@@ -112,6 +118,10 @@ func (p psqlRepository) FindNewsByFiltersWithPagination(
 }
 
 func getTotalPages(totalRows int64, limit int) int64 {
+	if int64(limit) > totalRows {
+		return 1
+	}
+
 	return totalRows / int64(limit)
 }
 

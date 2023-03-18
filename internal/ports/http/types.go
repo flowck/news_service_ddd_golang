@@ -6,9 +6,13 @@ import (
 	"github.com/flowck/news_service_ddd_golang/internal/ports/http/static"
 )
 
-type GenericResponse static.GenericResponse
+type GenericResponse struct {
+	Message string `json:"message,omitempty"`
+}
+
 type PublishNewsRequest static.PublishNewsRequest
 type GetNewsPayload static.GetNewsPayload
+type GetNewsByFiltersPayload static.GetNewsByFiltersPayload
 
 type ErrResponse struct {
 	Err     error  `json:"-"`
@@ -19,6 +23,10 @@ type ErrResponse struct {
 
 func (e ErrResponse) Render(w http.ResponseWriter, r *http.Request) error {
 	w.WriteHeader(e.Status)
+	return nil
+}
+
+func (s GetNewsByFiltersPayload) Render(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 

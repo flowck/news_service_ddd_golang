@@ -3,8 +3,6 @@ package http
 import (
 	nethttp "net/http"
 
-	"github.com/flowck/news_service_ddd_golang/internal/common/logs"
-
 	"github.com/flowck/news_service_ddd_golang/internal/app/queries"
 
 	"github.com/friendsofgo/errors"
@@ -17,8 +15,25 @@ import (
 )
 
 func (h handlers) GetNews(w nethttp.ResponseWriter, r *nethttp.Request, params static.GetNewsParams) {
-	logs.Info(*params.Page, *params.Limit)
-	reply(w, r, &GenericResponse{"success"})
+	query := queries.NewsByFilters{Filters: queries.NewsFilter{
+		Limit:  *params.Limit,
+		Page:   *params.Page,
+		Status: *params.Status,
+		Topic:  *params.Topic,
+	}}
+
+	paginatedNews, err := h.application.Queries.NewsByFilters.Execute(r.Context(), query)
+	if err != nil {
+		reply(w, r, newErrorWithStatus(err, "unable-to-get-news", nethttp.StatusInternalServerError))
+		return
+	}
+
+	reply(w, r, &GetNewsByFiltersPayload{
+		Data:         mapDomainNewsListToResponseNewsList(paginatedNews.Data),
+		Page:         paginatedNews.Page,
+		TotalPages:   paginatedNews.TotalPages,
+		TotalResults: paginatedNews.TotalResults,
+	})
 }
 
 func (h handlers) GetNewsByID(w nethttp.ResponseWriter, r *nethttp.Request, newsID string) {
