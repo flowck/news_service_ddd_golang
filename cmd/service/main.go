@@ -56,7 +56,7 @@ func main() {
 	application := &app.App{
 		Commands: app.Commands{
 			PublishNews:   commands.NewPublishNewsHandler(txProvider),
-			UnPublishNews: nil,
+			UnPublishNews: commands.NewUnPublishNewsHandler(txProvider),
 			EditNews:      nil,
 			CreateTopic:   nil,
 			RemoveTopic:   nil,

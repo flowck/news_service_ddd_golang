@@ -16,7 +16,7 @@ type QueryHandler[Q any, R any] interface {
 
 type Commands struct {
 	PublishNews   CommandHandler[commands.PublishNews]
-	UnPublishNews CommandHandler[any]
+	UnPublishNews CommandHandler[commands.UnPublishNews]
 	EditNews      CommandHandler[any]
 	CreateTopic   CommandHandler[any]
 	RemoveTopic   CommandHandler[any]

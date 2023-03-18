@@ -52,6 +52,7 @@ func (n *News) LastEditedAt() time.Time {
 
 func (n *News) UnPublish() {
 	n.status = StatusDraft
+	n.lastEditedAt = time.Now()
 }
 
 func New(
