@@ -3,11 +3,12 @@ package newsarticles_test
 import (
 	"context"
 	"database/sql"
-	"github.com/stretchr/testify/assert"
 	"log"
 	"os"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
 
 	"github.com/gosimple/slug"
 
