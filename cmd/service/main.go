@@ -8,6 +8,9 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/flowck/news_service_ddd_golang/internal/adapters/newsarticles"
+	"github.com/flowck/news_service_ddd_golang/internal/app/queries"
+
 	"github.com/kelseyhightower/envconfig"
 	_ "github.com/lib/pq"
 
@@ -51,6 +54,11 @@ func main() {
 		logger.Fatal(err)
 	}
 
+	newsRepository, err := newsarticles.NewPsqlRepository(db)
+	if err != nil {
+		logger.Fatal(err)
+	}
+
 	txProvider := transaction.NewSQLProvider(db)
 
 	application := &app.App{
@@ -63,7 +71,7 @@ func main() {
 			EditTopic:     nil,
 		},
 		Queries: app.Queries{
-			News:         nil,
+			NewsByID:     queries.NewNewsByIdHandler(newsRepository),
 			MultipleNews: nil,
 			Topic:        nil,
 			Topics:       nil,
