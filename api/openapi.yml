@@ -67,7 +67,23 @@ paths:
           $ref: '#/components/responses/DefaultSuccess'
         default:
           $ref: '#/components/responses/DefaultError'
-
+  /news/{newsID}/unpublish:
+    patch:
+      tags:
+        - News
+      summary: UnPublish news
+      operationId: UnPublishNews
+      parameters:
+        - name: newsID
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: News unpublished
+        default:
+          $ref: '#/components/responses/DefaultError'
 components:
   schemas:
     News:

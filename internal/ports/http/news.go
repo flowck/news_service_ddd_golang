@@ -3,6 +3,8 @@ package http
 import (
 	nethttp "net/http"
 
+	"github.com/friendsofgo/errors"
+
 	"github.com/flowck/news_service_ddd_golang/internal/app/commands"
 	"github.com/flowck/news_service_ddd_golang/internal/domain"
 	"github.com/flowck/news_service_ddd_golang/internal/domain/news"
@@ -66,4 +68,28 @@ func (h handlers) PublishNews(w nethttp.ResponseWriter, r *nethttp.Request) {
 	}
 
 	replyWithStatus(w, r, GenericResponse{}, nethttp.StatusCreated)
+}
+
+func (h handlers) UnPublishNews(w nethttp.ResponseWriter, r *nethttp.Request, newsID string) {
+	ID, err := domain.NewIDFromString(newsID)
+	if err != nil {
+		reply(w, r, newErrorWithStatus(err, "invalid-news-id", nethttp.StatusBadRequest))
+		return
+	}
+
+	err = h.application.Commands.UnPublishNews.Execute(r.Context(), commands.UnPublishNews{
+		ID: ID,
+	})
+
+	if errors.Is(err, news.ErrNewsNotFound) {
+		reply(w, r, newErrorWithStatus(err, "news-not-found", nethttp.StatusNotFound))
+		return
+	}
+
+	if err != nil {
+		reply(w, r, newErrorWithStatus(err, "unable-to-unpublish-news", nethttp.StatusInternalServerError))
+		return
+	}
+
+	replyWithStatus(w, r, GenericResponse{}, nethttp.StatusNoContent)
 }

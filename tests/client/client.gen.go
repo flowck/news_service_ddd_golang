@@ -142,6 +142,9 @@ type ClientInterface interface {
 	PublishNewsWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	PublishNews(ctx context.Context, body PublishNewsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// UnPublishNews request
+	UnPublishNews(ctx context.Context, newsID string, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
 
 func (c *Client) GetNews(ctx context.Context, params *GetNewsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
@@ -170,6 +173,18 @@ func (c *Client) PublishNewsWithBody(ctx context.Context, contentType string, bo
 
 func (c *Client) PublishNews(ctx context.Context, body PublishNewsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewPublishNewsRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) UnPublishNews(ctx context.Context, newsID string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUnPublishNewsRequest(c.Server, newsID)
 	if err != nil {
 		return nil, err
 	}
@@ -315,6 +330,40 @@ func NewPublishNewsRequestWithBody(server string, contentType string, body io.Re
 	return req, nil
 }
 
+// NewUnPublishNewsRequest generates requests for UnPublishNews
+func NewUnPublishNewsRequest(server string, newsID string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "newsID", runtime.ParamLocationPath, newsID)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/news/%s/unpublish", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("PATCH", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 func (c *Client) applyEditors(ctx context.Context, req *http.Request, additionalEditors []RequestEditorFn) error {
 	for _, r := range c.RequestEditors {
 		if err := r(ctx, req); err != nil {
@@ -365,6 +414,9 @@ type ClientWithResponsesInterface interface {
 	PublishNewsWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PublishNewsResponse, error)
 
 	PublishNewsWithResponse(ctx context.Context, body PublishNewsJSONRequestBody, reqEditors ...RequestEditorFn) (*PublishNewsResponse, error)
+
+	// UnPublishNews request
+	UnPublishNewsWithResponse(ctx context.Context, newsID string, reqEditors ...RequestEditorFn) (*UnPublishNewsResponse, error)
 }
 
 type GetNewsResponse struct {
@@ -412,6 +464,28 @@ func (r PublishNewsResponse) StatusCode() int {
 	return 0
 }
 
+type UnPublishNewsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSONDefault  *ErrorResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r UnPublishNewsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r UnPublishNewsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 // GetNewsWithResponse request returning *GetNewsResponse
 func (c *ClientWithResponses) GetNewsWithResponse(ctx context.Context, params *GetNewsParams, reqEditors ...RequestEditorFn) (*GetNewsResponse, error) {
 	rsp, err := c.GetNews(ctx, params, reqEditors...)
@@ -436,6 +510,15 @@ func (c *ClientWithResponses) PublishNewsWithResponse(ctx context.Context, body 
 		return nil, err
 	}
 	return ParsePublishNewsResponse(rsp)
+}
+
+// UnPublishNewsWithResponse request returning *UnPublishNewsResponse
+func (c *ClientWithResponses) UnPublishNewsWithResponse(ctx context.Context, newsID string, reqEditors ...RequestEditorFn) (*UnPublishNewsResponse, error) {
+	rsp, err := c.UnPublishNews(ctx, newsID, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUnPublishNewsResponse(rsp)
 }
 
 // ParseGetNewsResponse parses an HTTP response from a GetNewsWithResponse call
@@ -497,23 +580,50 @@ func ParsePublishNewsResponse(rsp *http.Response) (*PublishNewsResponse, error) 
 	return response, nil
 }
 
+// ParseUnPublishNewsResponse parses an HTTP response from a UnPublishNewsWithResponse call
+func ParseUnPublishNewsResponse(rsp *http.Response) (*UnPublishNewsResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &UnPublishNewsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"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",
+	"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",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file
