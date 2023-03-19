@@ -22,7 +22,7 @@ type Commands struct {
 	EditNews        CommandHandler[any]
 	CreateTopic     CommandHandler[commands.CreateTopic]
 	RemoveTopicByID CommandHandler[commands.RemoveTopicByID]
-	EditTopic       CommandHandler[any]
+	EditTopic       CommandHandler[commands.EditTopic]
 }
 
 type Queries struct {

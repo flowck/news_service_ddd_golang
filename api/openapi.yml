@@ -161,6 +161,28 @@ paths:
           description: OK
         default:
           $ref: '#/components/responses/DefaultError'
+    put:
+      tags:
+        - Topics
+      summary: Edit topic
+      operationId: editTopic
+      parameters:
+        - name: topicID
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EditTopicRequest"
+      responses:
+        '204':
+          description: Topic edited
+        default:
+          $ref: '#/components/responses/DefaultError'
 components:
   schemas:
     News:
@@ -223,6 +245,12 @@ components:
           type: string
           format: date-time
     CreateTopicRequest:
+      type: object
+      required: [ name ]
+      properties:
+        name:
+          type: string
+    EditTopicRequest:
       type: object
       required: [ name ]
       properties:
