@@ -21,5 +21,6 @@ type Repository interface {
 
 type TopicRepository interface {
 	Insert(ctx context.Context, t *Topic) error
-	Find(ctx context.Context) ([]*Topic, error)
+	Find(ctx context.Context, ID domain.ID) (*Topic, error)
+	FindAll(ctx context.Context) ([]*Topic, error)
 }
