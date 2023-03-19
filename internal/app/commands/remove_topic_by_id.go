@@ -20,5 +20,5 @@ func NewRemoveTopicByIDHandler(repository news.TopicRepository) removeTopicByIdH
 }
 
 func (p removeTopicByIdHandler) Execute(ctx context.Context, cmd RemoveTopicByID) error {
-	return nil
+	return p.repository.DeleteByID(ctx, cmd.ID)
 }
