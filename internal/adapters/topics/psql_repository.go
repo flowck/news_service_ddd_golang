@@ -2,6 +2,7 @@ package topics
 
 import (
 	"context"
+	"database/sql"
 
 	"github.com/flowck/news_service_ddd_golang/internal/domain"
 
@@ -44,5 +45,10 @@ func (p psqlRepository) FindAll(ctx context.Context) ([]*news.Topic, error) {
 }
 
 func (p psqlRepository) Find(ctx context.Context, ID domain.ID) (*news.Topic, error) {
-	return nil, nil
+	row, err := models.FindTopic(ctx, p.db, ID.String())
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, news.ErrTopicNotFound
+	}
+
+	return mapTopicModelToTopicDomain(row)
 }
