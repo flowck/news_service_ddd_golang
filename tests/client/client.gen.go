@@ -79,6 +79,11 @@ type GetNewsPayload struct {
 	Data News `json:"data"`
 }
 
+// GetTopicPayload defines model for GetTopicPayload.
+type GetTopicPayload struct {
+	Data Topic `json:"data"`
+}
+
 // GetTopicsPayload defines model for GetTopicsPayload.
 type GetTopicsPayload struct {
 	Data []Topic `json:"data"`
@@ -192,6 +197,9 @@ type ClientInterface interface {
 	CreateTopicWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	CreateTopic(ctx context.Context, body CreateTopicJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetTopicByID request
+	GetTopicByID(ctx context.Context, topicID string, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
 
 func (c *Client) GetNews(ctx context.Context, params *GetNewsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
@@ -280,6 +288,18 @@ func (c *Client) CreateTopicWithBody(ctx context.Context, contentType string, bo
 
 func (c *Client) CreateTopic(ctx context.Context, body CreateTopicJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewCreateTopicRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetTopicByID(ctx context.Context, topicID string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetTopicByIDRequest(c.Server, topicID)
 	if err != nil {
 		return nil, err
 	}
@@ -560,6 +580,40 @@ func NewCreateTopicRequestWithBody(server string, contentType string, body io.Re
 	return req, nil
 }
 
+// NewGetTopicByIDRequest generates requests for GetTopicByID
+func NewGetTopicByIDRequest(server string, topicID string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "topicID", runtime.ParamLocationPath, topicID)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/topics/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 func (c *Client) applyEditors(ctx context.Context, req *http.Request, additionalEditors []RequestEditorFn) error {
 	for _, r := range c.RequestEditors {
 		if err := r(ctx, req); err != nil {
@@ -624,6 +678,9 @@ type ClientWithResponsesInterface interface {
 	CreateTopicWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateTopicResponse, error)
 
 	CreateTopicWithResponse(ctx context.Context, body CreateTopicJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateTopicResponse, error)
+
+	// GetTopicByID request
+	GetTopicByIDWithResponse(ctx context.Context, topicID string, reqEditors ...RequestEditorFn) (*GetTopicByIDResponse, error)
 }
 
 type GetNewsResponse struct {
@@ -770,6 +827,31 @@ func (r CreateTopicResponse) StatusCode() int {
 	return 0
 }
 
+type GetTopicByIDResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *struct {
+		Data Topic `json:"data"`
+	}
+	JSONDefault *ErrorResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r GetTopicByIDResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetTopicByIDResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 // GetNewsWithResponse request returning *GetNewsResponse
 func (c *ClientWithResponses) GetNewsWithResponse(ctx context.Context, params *GetNewsParams, reqEditors ...RequestEditorFn) (*GetNewsResponse, error) {
 	rsp, err := c.GetNews(ctx, params, reqEditors...)
@@ -838,6 +920,15 @@ func (c *ClientWithResponses) CreateTopicWithResponse(ctx context.Context, body 
 		return nil, err
 	}
 	return ParseCreateTopicResponse(rsp)
+}
+
+// GetTopicByIDWithResponse request returning *GetTopicByIDResponse
+func (c *ClientWithResponses) GetTopicByIDWithResponse(ctx context.Context, topicID string, reqEditors ...RequestEditorFn) (*GetTopicByIDResponse, error) {
+	rsp, err := c.GetTopicByID(ctx, topicID, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetTopicByIDResponse(rsp)
 }
 
 // ParseGetNewsResponse parses an HTTP response from a GetNewsWithResponse call
@@ -1026,28 +1117,63 @@ func ParseCreateTopicResponse(rsp *http.Response) (*CreateTopicResponse, error) 
 	return response, nil
 }
 
+// ParseGetTopicByIDResponse parses an HTTP response from a GetTopicByIDWithResponse call
+func ParseGetTopicByIDResponse(rsp *http.Response) (*GetTopicByIDResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetTopicByIDResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest struct {
+			Data Topic `json:"data"`
+		}
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"H4sIAAAAAAAC/8xXTW/jNhD9KwJbYC+q5TSLHnRqsskWbrsfSFL0sAgMhhpL3IqkQg6TNQL994KkJFuW",
-	"lA/XG/RimCL5ZubNmyH5QJgSlZIg0ZD0gWgwlZIG/OAMVtSWeK610m7MlESQ6P7Sqio5o8iVTL4aJd03",
-	"wwoQ1P37UcOKpOSHZAOehFmTeLSLxgyp6zomGRimeeXASEpOohwkaM4icEsj3a2NyW+AH+HenK7f8xJB",
-	"m890XSqavci5SqsKNPIQY0bRf+UIwjzlu7Pt3MB1BSQlVGu6duOK5uD2Nt+5RMhB+5UKabl08x58pbSg",
-	"GJb88pbEkzs0GFvi8/bUMdFwa7mGjKRfQkR9y7uojcfXHZa6+QoMx7Lx6Y8t3g9H99Msj0X1IoevVMXZ",
-	"ayvEGx1K5L8EU8eNa974Ow0UwZu5gFsLBoceSyq25WhQc5kPnPCrhk7EpF+hA3SmMv+176nfFDFrUImm",
-	"cN3CyFhWRNREb0BQXi65XFoDbzYqbp2LiQBjmjrabQhb44jeKIsRFhCsDJF2wmxh4+D4WMBecCNxdnIZ",
-	"+Mqz0c8lNXiecYTsBHulm1GEn5ALGAu8sjclN8XLNpnS5qM+GKRozegUcixhfMbXyoFVzjPS2mz8jTtS",
-	"Oz87230edrgcy9rnsNwlb7ISHsvh/4X2RdYnfrjqMZKfya8z0g95jNKQ1wGLE2p/XpvxKpjoNY43YFZz",
-	"XF86aQVzp0A16BOLhRvd+NH7Nju//31FmobokMLsJlMFYhUaKXxD0JKWZyoIu99T3DqTJknOsbA3M6ZE",
-	"sirVPfsnkXBvlgb0HWewzLJsmauSyjy5OD85+3A+Ey4cq8t9MHznkCvVKpMyrzzfGUlKVlwLLtWMFVTm",
-	"VPJfczfhcMngYHCqjy6DBVcsnEHTrENWyIfF1f6OJn8u3p1/vPTROgGCFubTqjW3T+RdFZDtFSQmd6BN",
-	"CGk+m8+OnDlVgaQVJyk5ns1nx/62goVPosd3f3Lw1DmV+lN8kZG0vaX4DZoKcDdEkn55INzh31rQ61aL",
-	"KSm54NhKyR/wgn7jwgqSHs3nMRFcNqOxG9c4ZhUOmi3IPUC6wt3ADCpsfKev9Ec3Xsf9G/7P8/lUr+/W",
-	"JVOXbi9K/0J4GqP3lPB1b4Wgeh2yFsmQNqS5S1g4kK9dj1ZmJM9bnZ+EZgMGT1W2PtgjZeRsqfuNDbWF",
-	"esDm22Gn8ZXaNd5DkdY4OEFcHYdKSR7c7+KsfqpkTteLs4mycbW3kVjAI7tMfC/NvZrUBowlVjZJ8+ch",
-	"RVYM2ftL9qX4SvxNqaxz+XA66yJ8hLfN5XFKYlftFW8vIfQfcgeUQnfzbINq/JzuPFuvr+/UeUbed/t2",
-	"Hg8SMQ94MN6CfxF1eojaA2fAX7jZ6bu2Ejb3kDRJSsVoWSiD6fF8PifuNJuaP3Lz1/W/AQAA//+bygn9",
-	"phIAAA==",
+	"H4sIAAAAAAAC/8xYTW/jNhD9KwJbYC+q5TSLHnRqsskWbrsfSFL0sAgMhhpL3IqkQg6TNQL/94KkJFuW",
+	"5CSu1+glMEVyPt68eSTzRJgSlZIg0ZD0iWgwlZIG/OACFtSWeKm10m7MlESQ6H7Sqio5o8iVTL4aJd03",
+	"wwoQ1P36UcOCpOSHZG08CbMm8dauajdktVrFJAPDNK+cMZKSsygHCZqzCNzSSLdrY/Ib4Ed4NOfL97xE",
+	"0OYzXZaKZq8KrtKqAo085JhR9F85gjDPxe58uzBwWQFJCdWaLt24ojm4vfV3LhFy0H6lQlrO3bw3vlBa",
+	"UAxLfnlL4tEdGowt8WV7VjHRcG+5hoykX0JGXc/bVuuIb1tb6u4rMByqxqc/NnA/HNzPozyU1asCvlEV",
+	"Z8eJ2Ls6VMjHJnUd/Dar/0syq7gOzTt/p4EieDdXcG/BYD9iScVmBxnUXOa9IPyqfhAx6YpKzzpTmf/a",
+	"jdRvipg1qEStNW5hZCwrImqiNyAoL+dczq2BN+vGa4KLiQBj6tbf1rCNcUTvlMUICwhe+pa20mzMxiHw",
+	"oYR9jwzk2dKlFyvPBj+X1OBlxhGyM+yoTUYRfkIuYCjxyt6V3BSv22RKmw/GYJCiNYNTyLGE4RnfKwdm",
+	"Oc9I47OON25BbeNsfXdx2MJyqGqfw3JXvNFO2FXD/wvss6wLfH/VLpBfiK9z0k15CNJQ1x6KI2x/mcx4",
+	"FoxojcMNmNUcl9eOWsHdOVAN+sxi4UZ3fvS+qc7vf9+QWhCdpTC7rlSBWAUhhW8IWtLyQgVidzXFrTNp",
+	"kuQcC3s3YUoki1I9sn8SCY9mbkA/cAbzLMvmuSqpzJOry7OLD5cT4dKxutzHhlcOuVANMynzzPPKSFKy",
+	"4FpwqSasoDKnkv+auwlnl/QOBsf66Dp4cM3CGdRiHapCPsxu9g80+XP27vLjtc/WERC0MJ8Wjbt9Mm+7",
+	"gGyuIDF5AG1CStPJdHLi3KkKJK04ScnpZDo59RcsLHwRvX33IwcPnWOpP8VnGUmbi5XfoKkAd6kl6Zcn",
+	"wp39ewt62XAxJSUXHBsq+QNe0G9cWEHSk+k0JoLLejR0SRy2WYWDZsPkHkbaxl2b6XXY8E7f6Ts33sbd",
+	"R8nP0+mY1rfrkrF3gielf9Q8b6Pz+vF9b4WgehmqFslQNqS5K1g4kG+dRiszUOcN5SdBbMDgucqWB3tX",
+	"DZwtq66wobaw6qH5tq80vlNb4T0UaHWAI8Ct4tApyZP7O7tYPdcy58vZxUjbuN5bUyzYI9tIfC/OHY1q",
+	"PcQSK+ui+fOQIiv66P0lu1Q8En5jLGtDPhzP2gx34La+PI5R7Ka54u1FhO5D7oBUaG+eTVJ1nOPKs/H6",
+	"+k7KM/C+21d5vJGIeYMHwy3EF1HHh6g5cHr4rWmRPIX7524N8htfLEK1xaOoUOcfH0fhXrgV64cGgPUd",
+	"Lk2SUjFaFspgejqdTom7CYzNn7j529W/AQAA//+T+gPllRQAAA==",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

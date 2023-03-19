@@ -128,6 +128,23 @@ paths:
           description: Topic created
         default:
           $ref: '#/components/responses/DefaultError'
+  /topics/{topicID}:
+    get:
+      tags:
+        - Topics
+      summary: Get topics
+      operationId: getTopicByID
+      parameters:
+        - name: topicID
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          $ref: '#/components/responses/GetTopicPayload'
+        default:
+          $ref: '#/components/responses/DefaultError'
 components:
   schemas:
     News:
@@ -257,6 +274,16 @@ components:
                 type: array
                 items:
                   $ref: "#/components/schemas/Topic"
+    GetTopicPayload:
+      description: OK
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [ data ]
+            properties:
+              data:
+                $ref: "#/components/schemas/Topic"
     UnauthorizedError:
       description: 'Usually causes by an authentication token missing'
       content:

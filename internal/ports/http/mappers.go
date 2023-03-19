@@ -54,14 +54,18 @@ func mapDomainNewsToResponseNews(n *news.News) static.News {
 	}
 }
 
+func mapDomainTopicToResponse(topic *news.Topic) static.Topic {
+	return static.Topic{
+		Id:   topic.ID().String(),
+		Name: topic.Value(),
+	}
+}
+
 func mapDomainTopicsToResponse(topics []*news.Topic) []static.Topic {
 	result := make([]static.Topic, len(topics))
 
 	for i, topic := range topics {
-		result[i] = static.Topic{
-			Id:   topic.ID().String(),
-			Name: topic.Value(),
-		}
+		result[i] = mapDomainTopicToResponse(topic)
 	}
 
 	return result
