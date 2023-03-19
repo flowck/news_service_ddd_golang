@@ -39,7 +39,6 @@ func TestTopics(t *testing.T) {
 	require.Nil(t, err)
 
 	assert.Equal(t, http.StatusNotFound, res04.StatusCode())
-
 }
 
 func fixtureTopic(t *testing.T) client.CreateTopicRequest {
