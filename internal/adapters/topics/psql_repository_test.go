@@ -33,6 +33,11 @@ func TestTopicsRepositoryLifecycle(t *testing.T) {
 	topic := fixtureTopic(t)
 	assert.Nil(t, repo.Insert(ctx, topic))
 
+	// Seed
+	for i := 0; i < 5; i++ {
+		require.Nil(t, repo.Insert(ctx, fixtureTopic(t)))
+	}
+
 	// FindAll
 	topics, err := repo.FindAll(ctx)
 	require.Nil(t, err)
@@ -51,6 +56,17 @@ func TestTopicsRepositoryLifecycle(t *testing.T) {
 
 	err = repo.DeleteByID(ctx, domain.NewID())
 	assert.ErrorIs(t, err, news.ErrTopicNotFound)
+
+	// Update
+	toBeUpdatedTopic := topics[1]
+	require.Nil(t, toBeUpdatedTopic.Edit(gofakeit.BeerName()))
+
+	err = repo.Update(ctx, toBeUpdatedTopic)
+	assert.Nil(t, err)
+
+	updatedTopic, err := repo.Find(ctx, toBeUpdatedTopic.ID())
+	require.Nil(t, err)
+	assert.Equal(t, toBeUpdatedTopic.Value(), updatedTopic.Value())
 }
 
 func TestMain(m *testing.M) {
