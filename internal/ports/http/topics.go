@@ -3,9 +3,8 @@ package http
 import (
 	nethttp "net/http"
 
-	"github.com/flowck/news_service_ddd_golang/internal/domain"
-
 	"github.com/flowck/news_service_ddd_golang/internal/app/commands"
+	"github.com/flowck/news_service_ddd_golang/internal/domain"
 	"github.com/flowck/news_service_ddd_golang/internal/domain/news"
 )
 
