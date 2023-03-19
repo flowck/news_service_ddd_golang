@@ -39,6 +39,17 @@ func TestTopics(t *testing.T) {
 	require.Nil(t, err)
 
 	assert.Equal(t, http.StatusNotFound, res04.StatusCode())
+
+	// remove topic by id
+	res05, err := getClient(t).RemoveTopicByID(ctx, res03.JSON200.Data.Id)
+	require.Nil(t, err)
+
+	assert.Equal(t, http.StatusNoContent, res05.StatusCode)
+
+	res06, err := getClient(t).GetTopicByIDWithResponse(ctx, res03.JSON200.Data.Id)
+	require.Nil(t, err)
+
+	assert.Equal(t, http.StatusNotFound, res06.StatusCode())
 }
 
 func fixtureTopic(t *testing.T) client.CreateTopicRequest {
