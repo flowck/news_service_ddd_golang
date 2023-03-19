@@ -54,5 +54,18 @@ func (p psqlRepository) Find(ctx context.Context, ID domain.ID) (*news.Topic, er
 }
 
 func (p psqlRepository) DeleteByID(ctx context.Context, ID domain.ID) error {
+	row, err := models.FindTopic(ctx, p.db, ID.String())
+	if errors.Is(err, sql.ErrNoRows) {
+		return news.ErrTopicNotFound
+	}
+
+	if err != nil {
+		return err
+	}
+
+	if _, err = row.Delete(ctx, p.db); err != nil {
+		return err
+	}
+
 	return nil
 }
