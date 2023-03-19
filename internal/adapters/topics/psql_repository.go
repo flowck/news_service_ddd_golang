@@ -21,5 +21,11 @@ func NewPsqlRepository(db boil.ContextExecutor) (psqlRepository, error) {
 }
 
 func (p psqlRepository) Insert(ctx context.Context, t *news.Topic) error {
+	row := mapTopicDomainToTopicModel(t)
+
+	if err := row.Insert(ctx, p.db, boil.Infer()); err != nil {
+		return err
+	}
+
 	return nil
 }
