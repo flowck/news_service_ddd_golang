@@ -19,5 +19,5 @@ func NewEditTopicHandler(repository news.TopicRepository) editTopicHandler {
 }
 
 func (p editTopicHandler) Execute(ctx context.Context, cmd EditTopic) error {
-	return nil
+	return p.repository.Update(ctx, cmd.Topic)
 }
