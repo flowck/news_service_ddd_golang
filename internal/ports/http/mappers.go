@@ -36,7 +36,7 @@ func mapDomainNewsListToResponseNewsList(newsList []*news.News) []static.News {
 }
 
 func mapDomainNewsToResponseNews(n *news.News) static.News {
-	topics := make([]string, 1)
+	topics := make([]static.Topic, 1)
 
 	if n.Topics() != nil {
 		topics = mapDomainTopicsToResponse(n.Topics())
@@ -54,18 +54,17 @@ func mapDomainNewsToResponseNews(n *news.News) static.News {
 	}
 }
 
-func mapDomainTopicsToResponse(topics []*news.Topic) []string {
-	result := make([]string, len(topics))
+func mapDomainTopicsToResponse(topics []*news.Topic) []static.Topic {
+	result := make([]static.Topic, len(topics))
 
 	for i, topic := range topics {
-		result[i] = topic.String()
+		result[i] = static.Topic{
+			Id:   topic.ID().String(),
+			Name: topic.Value(),
+		}
 	}
 
 	return result
-}
-
-func toPtr[V any](v V) *V {
-	return &v
 }
 
 func mapRequestQueryToPaginationParams(r *nethttp.Request) (static.GetNewsParams, error) {
@@ -98,4 +97,8 @@ func mapRequestQueryToPaginationParams(r *nethttp.Request) (static.GetNewsParams
 		Status: toPtr(r.URL.Query().Get("status")),
 		Topic:  toPtr(r.URL.Query().Get("topic")),
 	}, nil
+}
+
+func toPtr[V any](v V) *V {
+	return &v
 }

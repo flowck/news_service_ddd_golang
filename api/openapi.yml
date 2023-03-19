@@ -102,6 +102,16 @@ paths:
         default:
           $ref: '#/components/responses/DefaultError'
   /topics:
+    get:
+      tags:
+        - Topics
+      summary: Get topics
+      operationId: getTopics
+      responses:
+        '200':
+          $ref: '#/components/responses/GetTopicsPayload'
+        default:
+          $ref: '#/components/responses/DefaultError'
     post:
       tags:
         - Topics
@@ -145,13 +155,21 @@ components:
         topics:
           type: array
           items:
-            type: string
+            $ref: '#/components/schemas/Topic'
         publishedAt:
           type: string
           format: date-time
         lastEditedAt:
           type: string
           format: date-time
+    Topic:
+      type: object
+      required: [id, name]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
     PublishNewsRequest:
       type: object
       required: [title, slug, content, status, topicIds, publishedAt]
@@ -227,6 +245,18 @@ components:
                 format: int64
               page:
                 type: integer
+    GetTopicsPayload:
+      description: OK
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [ data ]
+            properties:
+              data:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Topic"
     UnauthorizedError:
       description: 'Usually causes by an authentication token missing'
       content:

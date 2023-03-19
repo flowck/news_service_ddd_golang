@@ -29,3 +29,7 @@ func (h handlers) CreateTopic(w nethttp.ResponseWriter, r *nethttp.Request) {
 
 	replyWithStatus(w, r, GenericResponse{Message: "topic created successfully"}, nethttp.StatusCreated)
 }
+
+func (h handlers) GetTopics(w nethttp.ResponseWriter, r *nethttp.Request) {
+	reply(w, r, GetTopicsPayload{Data: mapDomainTopicsToResponse(nil)})
+}
