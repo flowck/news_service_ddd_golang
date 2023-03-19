@@ -37,6 +37,13 @@ func TestTopicsRepositoryLifecycle(t *testing.T) {
 	topics, err := repo.FindAll(ctx)
 	require.Nil(t, err)
 	assert.Equal(t, true, len(topics) > 0)
+
+	// Find
+	topic00, err := repo.Find(ctx, topics[0].ID())
+	require.Nil(t, err)
+
+	assert.Equal(t, topics[0].ID(), topic00.ID())
+	assert.Equal(t, topics[0].Value(), topic00.Value())
 }
 
 func TestMain(m *testing.M) {

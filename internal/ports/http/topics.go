@@ -3,7 +3,6 @@ package http
 import (
 	nethttp "net/http"
 
-	"github.com/flowck/news_service_ddd_golang/internal/ports/http/static"
 	"github.com/friendsofgo/errors"
 
 	"github.com/flowck/news_service_ddd_golang/internal/app/commands"
@@ -51,7 +50,7 @@ func (h handlers) GetTopicByID(w nethttp.ResponseWriter, r *nethttp.Request, top
 		return
 	}
 
-	_, err = h.application.Queries.TopicByID.Execute(r.Context(), queries.TopicByID{ID: ID})
+	topic, err := h.application.Queries.TopicByID.Execute(r.Context(), queries.TopicByID{ID: ID})
 	if errors.Is(err, news.ErrTopicNotFound) {
 		reply(w, r, newErrorWithStatus(err, "topic-not-found", nethttp.StatusNotFound))
 		return
@@ -62,9 +61,5 @@ func (h handlers) GetTopicByID(w nethttp.ResponseWriter, r *nethttp.Request, top
 		return
 	}
 
-	// mapDomainTopicToResponse(topic)
-	reply(w, r, GetTopicPayload{Data: static.Topic{
-		Id:   "",
-		Name: "",
-	}})
+	reply(w, r, GetTopicPayload{Data: mapDomainTopicToResponse(topic)})
 }
