@@ -8,6 +8,8 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/flowck/news_service_ddd_golang/internal/adapters/topics"
+
 	"github.com/flowck/news_service_ddd_golang/internal/adapters/newsarticles"
 	"github.com/flowck/news_service_ddd_golang/internal/app/queries"
 
@@ -59,6 +61,11 @@ func main() {
 		logger.Fatal(err)
 	}
 
+	topicsRepository, err := topics.NewPsqlRepository(db)
+	if err != nil {
+		logger.Fatal(err)
+	}
+
 	txProvider := transaction.NewSQLProvider(db)
 
 	application := &app.App{
@@ -66,7 +73,7 @@ func main() {
 			PublishNews:   commands.NewPublishNewsHandler(txProvider),
 			UnPublishNews: commands.NewUnPublishNewsHandler(txProvider),
 			EditNews:      nil,
-			CreateTopic:   commands.NewCreateTopicHandler(),
+			CreateTopic:   commands.NewCreateTopicHandler(topicsRepository),
 			RemoveTopic:   nil,
 			EditTopic:     nil,
 		},

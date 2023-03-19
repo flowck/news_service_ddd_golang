@@ -17,3 +17,7 @@ type Repository interface {
 	Update(ctx context.Context, n *News) error
 	Find(ctx context.Context, ID domain.ID) (*News, error)
 }
+
+type TopicRepository interface {
+	Insert(ctx context.Context, t *Topic) error
+}
