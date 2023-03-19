@@ -15,6 +15,16 @@ func TestTopics(t *testing.T) {
 	res01, err := getClient(t).CreateTopic(ctx, fixtureTopic(t))
 	require.Nil(t, err)
 	assert.Equal(t, http.StatusCreated, res01.StatusCode)
+
+	// get topics
+	res02, err := getClient(t).GetTopicsWithResponse(ctx)
+	require.Nil(t, err)
+	assert.Equal(t, http.StatusOK, res02.StatusCode())
+
+	for _, topic := range res02.JSON200.Data {
+		assert.NotEmpty(t, topic.Id)
+		assert.NotEmpty(t, topic.Name)
+	}
 }
 
 func fixtureTopic(t *testing.T) client.CreateTopicRequest {
