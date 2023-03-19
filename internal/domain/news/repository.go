@@ -20,4 +20,5 @@ type Repository interface {
 
 type TopicRepository interface {
 	Insert(ctx context.Context, t *Topic) error
+	Find(ctx context.Context) ([]*Topic, error)
 }

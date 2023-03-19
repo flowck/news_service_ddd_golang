@@ -3,9 +3,11 @@ package topics
 import (
 	"context"
 
-	"github.com/flowck/news_service_ddd_golang/internal/domain/news"
 	"github.com/friendsofgo/errors"
 	"github.com/volatiletech/sqlboiler/v4/boil"
+
+	"github.com/flowck/news_service_ddd_golang/internal/adapters/models"
+	"github.com/flowck/news_service_ddd_golang/internal/domain/news"
 )
 
 type psqlRepository struct {
@@ -28,4 +30,13 @@ func (p psqlRepository) Insert(ctx context.Context, t *news.Topic) error {
 	}
 
 	return nil
+}
+
+func (p psqlRepository) Find(ctx context.Context) ([]*news.Topic, error) {
+	rows, err := models.Topics().All(ctx, p.db)
+	if err != nil {
+		return nil, err
+	}
+
+	return mapTopicListModelToTopicListDomain(rows)
 }

@@ -18,5 +18,5 @@ func NewTopicsHandler(repository news.TopicRepository) topicsHandler {
 }
 
 func (h topicsHandler) Execute(ctx context.Context, q Topics) ([]*news.Topic, error) {
-	return nil, nil
+	return h.repository.Find(ctx)
 }

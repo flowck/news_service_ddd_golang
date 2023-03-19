@@ -32,6 +32,11 @@ func TestTopicsRepositoryLifecycle(t *testing.T) {
 	// Insert
 	topic := fixtureTopic(t)
 	assert.Nil(t, repo.Insert(ctx, topic))
+
+	// Find
+	topics, err := repo.Find(ctx)
+	require.Nil(t, err)
+	assert.Equal(t, true, len(topics) > 0)
 }
 
 func TestMain(m *testing.M) {
@@ -57,7 +62,7 @@ func TestMain(m *testing.M) {
 func fixtureTopic(t *testing.T) *news.Topic {
 	n, err := news.NewTopic(
 		domain.NewID(),
-		gofakeit.BeerAlcohol(),
+		gofakeit.BeerName(),
 	)
 	require.Nil(t, err)
 
