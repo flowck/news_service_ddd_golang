@@ -24,4 +24,5 @@ type TopicRepository interface {
 	Find(ctx context.Context, ID domain.ID) (*Topic, error)
 	FindAll(ctx context.Context) ([]*Topic, error)
 	DeleteByID(ctx context.Context, ID domain.ID) error
+	Update(ctx context.Context, topic *Topic) error
 }

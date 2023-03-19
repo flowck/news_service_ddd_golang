@@ -25,14 +25,24 @@ func NewTopic(ID domain.ID, value string) (*Topic, error) {
 	}, nil
 }
 
-func (t Topic) String() string {
+func (t *Topic) String() string {
 	return t.value
 }
 
-func (t Topic) ID() domain.ID {
+func (t *Topic) ID() domain.ID {
 	return t.id
 }
 
-func (t Topic) Value() string {
+func (t *Topic) Value() string {
 	return t.value
+}
+
+func (t *Topic) Edit(value string) error {
+	if value == "" {
+		return errors.New("topic name cannot be empty")
+	}
+
+	t.value = value
+
+	return nil
 }

@@ -3,6 +3,9 @@ package topics
 import (
 	"context"
 	"database/sql"
+	"time"
+
+	"github.com/volatiletech/null/v8"
 
 	"github.com/flowck/news_service_ddd_golang/internal/domain"
 
@@ -64,6 +67,26 @@ func (p psqlRepository) DeleteByID(ctx context.Context, ID domain.ID) error {
 	}
 
 	if _, err = row.Delete(ctx, p.db); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (p psqlRepository) Update(ctx context.Context, topic *news.Topic) error {
+	row, err := models.FindTopic(ctx, p.db, topic.ID().String())
+	if errors.Is(err, sql.ErrNoRows) {
+		return news.ErrTopicNotFound
+	}
+
+	if err != nil {
+		return err
+	}
+
+	row.Name = topic.Value()
+	row.UpdatedAt = null.TimeFrom(time.Now())
+
+	if _, err = row.Update(ctx, p.db, boil.Infer()); err != nil {
 		return err
 	}
 
