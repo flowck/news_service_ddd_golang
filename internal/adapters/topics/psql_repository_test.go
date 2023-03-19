@@ -44,6 +44,13 @@ func TestTopicsRepositoryLifecycle(t *testing.T) {
 
 	assert.Equal(t, topics[0].ID(), topic00.ID())
 	assert.Equal(t, topics[0].Value(), topic00.Value())
+
+	// Delete by ID
+	err = repo.DeleteByID(ctx, topic00.ID())
+	assert.Nil(t, err)
+
+	err = repo.DeleteByID(ctx, domain.NewID())
+	assert.ErrorIs(t, err, news.ErrTopicNotFound)
 }
 
 func TestMain(m *testing.M) {
