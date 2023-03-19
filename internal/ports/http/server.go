@@ -139,6 +139,10 @@ func registerHandlers(r *chi.Mux, application *app.App, swagger *openapi3.T) {
 			r.Get("/", func(w nethttp.ResponseWriter, r *nethttp.Request) {
 				h.GetTopicByID(w, r, chi.URLParam(r, "topicID"))
 			})
+
+			r.Delete("/", func(w nethttp.ResponseWriter, r *nethttp.Request) {
+				h.RemoveTopicByID(w, r, chi.URLParam(r, "topicID"))
+			})
 		})
 	})
 }

@@ -132,7 +132,7 @@ paths:
     get:
       tags:
         - Topics
-      summary: Get topics
+      summary: Get topic by id
       operationId: getTopicByID
       parameters:
         - name: topicID
@@ -143,6 +143,22 @@ paths:
       responses:
         '200':
           $ref: '#/components/responses/GetTopicPayload'
+        default:
+          $ref: '#/components/responses/DefaultError'
+    delete:
+      tags:
+        - Topics
+      summary: Remove topic by id
+      operationId: removeTopicByID
+      parameters:
+        - name: topicID
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: OK
         default:
           $ref: '#/components/responses/DefaultError'
 components:

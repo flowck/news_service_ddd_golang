@@ -8,17 +8,15 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/flowck/news_service_ddd_golang/internal/adapters/topics"
-
-	"github.com/flowck/news_service_ddd_golang/internal/adapters/newsarticles"
-	"github.com/flowck/news_service_ddd_golang/internal/app/queries"
-
 	"github.com/kelseyhightower/envconfig"
 	_ "github.com/lib/pq"
 
+	"github.com/flowck/news_service_ddd_golang/internal/adapters/newsarticles"
+	"github.com/flowck/news_service_ddd_golang/internal/adapters/topics"
 	"github.com/flowck/news_service_ddd_golang/internal/adapters/transaction"
 	"github.com/flowck/news_service_ddd_golang/internal/app"
 	"github.com/flowck/news_service_ddd_golang/internal/app/commands"
+	"github.com/flowck/news_service_ddd_golang/internal/app/queries"
 	"github.com/flowck/news_service_ddd_golang/internal/common/logs"
 	"github.com/flowck/news_service_ddd_golang/internal/common/psql"
 	"github.com/flowck/news_service_ddd_golang/internal/ports/http"
@@ -70,12 +68,12 @@ func main() {
 
 	application := &app.App{
 		Commands: app.Commands{
-			PublishNews:   commands.NewPublishNewsHandler(txProvider),
-			UnPublishNews: commands.NewUnPublishNewsHandler(txProvider),
-			EditNews:      nil,
-			CreateTopic:   commands.NewCreateTopicHandler(topicsRepository),
-			RemoveTopic:   nil,
-			EditTopic:     nil,
+			PublishNews:     commands.NewPublishNewsHandler(txProvider),
+			UnPublishNews:   commands.NewUnPublishNewsHandler(txProvider),
+			EditNews:        nil,
+			CreateTopic:     commands.NewCreateTopicHandler(topicsRepository),
+			RemoveTopicByID: commands.NewRemoveTopicByIDHandler(topicsRepository),
+			EditTopic:       nil,
 		},
 		Queries: app.Queries{
 			NewsByID:      queries.NewNewsByIdHandler(newsRepository),
