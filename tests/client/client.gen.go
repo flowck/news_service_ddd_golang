@@ -26,6 +26,11 @@ type CreateTopicRequest struct {
 	Name string `json:"name"`
 }
 
+// EditTopicRequest defines model for EditTopicRequest.
+type EditTopicRequest struct {
+	Name string `json:"name"`
+}
+
 // ErrorResponse defines model for ErrorResponse.
 type ErrorResponse struct {
 	// Code Error custom error code such as 'email_in_use'
@@ -102,6 +107,9 @@ type PublishNewsJSONRequestBody = PublishNewsRequest
 
 // CreateTopicJSONRequestBody defines body for CreateTopic for application/json ContentType.
 type CreateTopicJSONRequestBody = CreateTopicRequest
+
+// EditTopicJSONRequestBody defines body for EditTopic for application/json ContentType.
+type EditTopicJSONRequestBody = EditTopicRequest
 
 // RequestEditorFn  is the function signature for the RequestEditor callback function
 type RequestEditorFn func(ctx context.Context, req *http.Request) error
@@ -203,6 +211,11 @@ type ClientInterface interface {
 
 	// GetTopicByID request
 	GetTopicByID(ctx context.Context, topicID string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// EditTopic request with any body
+	EditTopicWithBody(ctx context.Context, topicID string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	EditTopic(ctx context.Context, topicID string, body EditTopicJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
 
 func (c *Client) GetNews(ctx context.Context, params *GetNewsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
@@ -315,6 +328,30 @@ func (c *Client) RemoveTopicByID(ctx context.Context, topicID string, reqEditors
 
 func (c *Client) GetTopicByID(ctx context.Context, topicID string, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetTopicByIDRequest(c.Server, topicID)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) EditTopicWithBody(ctx context.Context, topicID string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewEditTopicRequestWithBody(c.Server, topicID, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) EditTopic(ctx context.Context, topicID string, body EditTopicJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewEditTopicRequest(c.Server, topicID, body)
 	if err != nil {
 		return nil, err
 	}
@@ -663,6 +700,53 @@ func NewGetTopicByIDRequest(server string, topicID string) (*http.Request, error
 	return req, nil
 }
 
+// NewEditTopicRequest calls the generic EditTopic builder with application/json body
+func NewEditTopicRequest(server string, topicID string, body EditTopicJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewEditTopicRequestWithBody(server, topicID, "application/json", bodyReader)
+}
+
+// NewEditTopicRequestWithBody generates requests for EditTopic with any type of body
+func NewEditTopicRequestWithBody(server string, topicID string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "topicID", runtime.ParamLocationPath, topicID)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/topics/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("PUT", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
 func (c *Client) applyEditors(ctx context.Context, req *http.Request, additionalEditors []RequestEditorFn) error {
 	for _, r := range c.RequestEditors {
 		if err := r(ctx, req); err != nil {
@@ -733,6 +817,11 @@ type ClientWithResponsesInterface interface {
 
 	// GetTopicByID request
 	GetTopicByIDWithResponse(ctx context.Context, topicID string, reqEditors ...RequestEditorFn) (*GetTopicByIDResponse, error)
+
+	// EditTopic request with any body
+	EditTopicWithBodyWithResponse(ctx context.Context, topicID string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*EditTopicResponse, error)
+
+	EditTopicWithResponse(ctx context.Context, topicID string, body EditTopicJSONRequestBody, reqEditors ...RequestEditorFn) (*EditTopicResponse, error)
 }
 
 type GetNewsResponse struct {
@@ -926,6 +1015,28 @@ func (r GetTopicByIDResponse) StatusCode() int {
 	return 0
 }
 
+type EditTopicResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSONDefault  *ErrorResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r EditTopicResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r EditTopicResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 // GetNewsWithResponse request returning *GetNewsResponse
 func (c *ClientWithResponses) GetNewsWithResponse(ctx context.Context, params *GetNewsParams, reqEditors ...RequestEditorFn) (*GetNewsResponse, error) {
 	rsp, err := c.GetNews(ctx, params, reqEditors...)
@@ -1012,6 +1123,23 @@ func (c *ClientWithResponses) GetTopicByIDWithResponse(ctx context.Context, topi
 		return nil, err
 	}
 	return ParseGetTopicByIDResponse(rsp)
+}
+
+// EditTopicWithBodyWithResponse request with arbitrary body returning *EditTopicResponse
+func (c *ClientWithResponses) EditTopicWithBodyWithResponse(ctx context.Context, topicID string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*EditTopicResponse, error) {
+	rsp, err := c.EditTopicWithBody(ctx, topicID, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseEditTopicResponse(rsp)
+}
+
+func (c *ClientWithResponses) EditTopicWithResponse(ctx context.Context, topicID string, body EditTopicJSONRequestBody, reqEditors ...RequestEditorFn) (*EditTopicResponse, error) {
+	rsp, err := c.EditTopic(ctx, topicID, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseEditTopicResponse(rsp)
 }
 
 // ParseGetNewsResponse parses an HTTP response from a GetNewsWithResponse call
@@ -1261,29 +1389,55 @@ func ParseGetTopicByIDResponse(rsp *http.Response) (*GetTopicByIDResponse, error
 	return response, nil
 }
 
+// ParseEditTopicResponse parses an HTTP response from a EditTopicWithResponse call
+func ParseEditTopicResponse(rsp *http.Response) (*EditTopicResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &EditTopicResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"H4sIAAAAAAAC/8xYS2/jNhD+KwJbYC+q5W0WPejUZJMt3HYfSFL0sAgMmhpL3IqkQg6TNQL/94KkJFuW",
-	"lIfrGL0EpkjO45tvPpJ5IEyJSkmQaEj6QDSYSkkDfnAOS2pLvNBaaTdmSiJIdD9pVZWcUeRKJt+Mku6b",
-	"YQUI6n79qGFJUvJDsjGehFmTeGuXtRuyXq9jkoFhmlfOGEnJaZSDBM1ZBG5ppNu1MfkN8BPcm7PVB14i",
-	"aPOFrkpFsxcFV2lVgUYecswo+q8cQZinYne+XRi4qoCkhGpNV25c0Rzc3vo7lwg5aL9SIS3nbt4bXyot",
-	"KIYlv7wj8egODcaW+Lw965houLVcQ0bSryGjruddq3XEN60ttfgGDIeq8fmPLdwPB/fTKA9l9aKAr1XF",
-	"2XEi9q4OFfKxSV0Hv8vq/5LMOq5D887fa6AI3s0l3Fow2I9YUrHdQQY1l3kvCL+qH0RMuqLSs85U5r92",
-	"I/WbImYNKlFrjVsYGcuKiJroDQjKyzmXc2vgzabxmuBiIsCYuvV3NWxrHNGFshhhAcFL39JOmo3ZOAQ+",
-	"lLDvkYE8W7r0YuXZ4OeSGrzIOEJ2ih21ySjCT8gFDCVe2UXJTfGyTaa0+WAMBilaMziFHEsYnvG9cmCW",
-	"84w0Put44xbUNs7WdxeHHSyHqvYlLHfFG+2Ex2r4f4F9lnWB7696DORn4uucdFMegjTUtYfiCNufJzOe",
-	"BSNa43ADZjXH1ZWjVnB3BlSDPrVYuNHCjz401fn972tSC6KzFGY3lSoQqyCk8B1BS1qeq0Dsrqa4dSZN",
-	"kpxjYRcTpkSyLNU9+yeRcG/mBvQdZzDPsmyeq5LKPLm8OD3/eDERLh2ry31seOWQS9UwkzLPPK+MJCVL",
-	"rgWXasIKKnMq+a+5m3B2Se9gcKyProIH1yycQS3WoSrk4+x6/0CTP2fvLz5d+WwdAUEL83nZuNsn87YL",
-	"yPYKEpM70CakNJ1MJ2+dO1WBpBUnKTmZTCcn/oKFhS+it+9+5OChcyz1p/gsI2lzsfIbNBXgLrUk/fpA",
-	"uLN/a0GvGi6mpOSCY0Mlf8AL+p0LK0j6djqNieCyHg1dEodtVuGg2TK5h5G2cTdmeh02vNN3+qMbb+Lu",
-	"o+Tn6XRM69t1ydg7wZPSP2qettF5/fi+t0JQvQpVi2QoG9LcFSwcyDdOo5UZqPOW8pMgNmDwTGWrg72r",
-	"Bs6WdVfYUFtY99B811ca36mt8B4KtDrAEeDWceiU5MH9nZ2vn2qZs9XsfKRtXO9tKBbskV0kXotzR6Na",
-	"D7HEyrpo/jykyIo+en/JLhWPhN8Yy9qQD8ezNsNHcNtcHscodt1c8fYiQvchd0AqtDfPJqk6znHl2Xp9",
-	"vZLyDLzv9lUebyRi3uDBcAvxRdTxIWoOnB5+G1okD+H+GTQogxIQ+rheglB3IetnS1Ft9/C9FP6DcAiw",
-	"QloBpmixisKLqE+2R/vmyIC8oCdfqyXHoQovBn3XoLC536ZJUipGy0IZTE+m0ylxt6Sx+bdu/mb9bwAA",
-	"AP//mLg3iLEVAAA=",
+	"H4sIAAAAAAAC/8xYXW/bNhT9KwI3oC+a5SzFHvS0pEkHb+sHkgx7KAKDlq4ldiKpkJdJjcD/fSApyZYl",
+	"OYmrGH0xTJG8H+eee0TqkSSSl1KAQE3iR6JAl1JocIMLWFJT4KVSUtlxIgWCQPuXlmXBEopMiuirlsI+",
+	"00kOnNp/PytYkpj8FG2MR35WR87aVeWGrNfrkKSgE8VKa4zE5CzIQIBiSQB2aaCatSH5A/AjPOjz1XtW",
+	"ICj9ma4KSdMXBVcqWYJC5nNMKbqnDIHrp2K3vm0YuCqBxIQqRVd2XNIM7N7qORMIGSi3UiIt5nbeGV9K",
+	"xSn6Jb+9JeHgDgXaFPi8PeuQKLgzTEFK4i8+o7bnXatVxLeNLbn4Cgn2VePTX1u4jwf30yj3ZfWigG9k",
+	"yZLjROxcjRXysUldBb/L6u9JZh1WoTnn7xRQBOfmCu4MaOxGLCjf7iCNiomsE4Rb1Q0iJJcpw9d10FKt",
+	"jvVEpu5pGwq3KUiMRskrMbMLA22SPKA6eAOcsmLOxNxoeLPp7Dq4kHDQutKWXZHcGgd0IQ0GmIP30rW0",
+	"k2ZtNvSB9yXsmrAnz4aPnVhZ2vu4oBpteSA9w5acpRThF2Qc+hIvzaJgOn/ZJl2YrDcGjRSN7p1ChgX0",
+	"z7hmHLmNWEpqn1W8YQNqE2fju43DDpZ9Vfvsl9viDXbCvhr+KLDP0jbw3VX7QH4mvtZJO+U+SH1dOygO",
+	"sP15MuNYMKA1FjdIjGK4urbU8u7OgSpQZwZzO1q40fu6On/+e0MqxbWW/OymUjli6ZUaviEoQYsL6Ynd",
+	"1hS7TsdRlDHMzWKSSB4tC/mQ/BcJeNBzDeqeJTBP03SeyYKKLLq6PLv4cDnhNh2jikNsOOUQS1kzkyaO",
+	"eU4ZSUyWTHEm5CTJqcioYL9ndsLaJZ03j2V9cO092GZhCVRi7atCPsxuDg80+nv27vLjtcvWEhAU15+W",
+	"tbtDMm+6gGyvICG5B6V9StPJdHJi3ckSBC0ZicnpZDo5dSc4zF0RnX37JwMHnWWpOybMUhLXJze3QVEO",
+	"9tRM4i+PhFn7dwbUquZiTArGGdZUcicITr8xbjiJT6bTkHAmqlHfKbTfZulfNFsmDzDSNO7GTKfD+ne6",
+	"Tt+78TZs33p+nU6HtL5ZFw1dRBwp3a3paRut65Xre8M5VStftUD4siHNbMH8C/nWarTUPXXeUn7ixQY0",
+	"nst0NdrFrefdsm4LGyoD6w6ab7tK4zq1Ed6xQKsCHABuHfpOiR7t7+xi/VTLnK9mFwNtY3tvQzFvj+wi",
+	"8VqcOxrVOohFRlRFc+9DikneRe8f0abikfAbYlkT8ng8azLcg9vm8DhEsZv6iHcQEdo3xRGp0Jw866Sq",
+	"OIeVZ+t690rK03OBPFR5nJEgcQZHw83HF1DLh6B+4XTw29AievTnT69BKRSA0MX1Cri891k/W4oqu+P3",
+	"kv9EMQZYPi0PU7BYBf5G1CXb3r45MiAv6MnXasl9UJWmB6rmk8jr4jR+t3e+5Xxfr4O7L49VDxvcnhZ3",
+	"lzd1XwO9uWrEUVTIhBa51BifTqdTYg+sQ/Mndv52/X8AAAD//w/ylDqdFwAA",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

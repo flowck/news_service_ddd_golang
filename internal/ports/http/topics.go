@@ -73,15 +73,45 @@ func (h handlers) RemoveTopicByID(w nethttp.ResponseWriter, r *nethttp.Request, 
 
 	err = h.application.Commands.RemoveTopicByID.Execute(r.Context(), commands.RemoveTopicByID{ID: ID})
 	if errors.Is(err, news.ErrTopicNotFound) {
-		if errors.Is(err, news.ErrTopicNotFound) {
-			reply(w, r, newErrorWithStatus(err, "topic-not-found", nethttp.StatusNotFound))
-			return
-		}
+		reply(w, r, newErrorWithStatus(err, "topic-not-found", nethttp.StatusNotFound))
 		return
 	}
 
 	if err != nil {
 		reply(w, r, newErrorWithStatus(err, "unable-to-remove-topic", nethttp.StatusInternalServerError))
+		return
+	}
+
+	replyWithStatus(w, r, nil, nethttp.StatusNoContent)
+}
+
+func (h handlers) EditTopic(w nethttp.ResponseWriter, r *nethttp.Request, topicID string) {
+	ID, err := domain.NewIDFromString(topicID)
+	if err != nil {
+		reply(w, r, newErrorWithStatus(err, "invalid-topic-id", nethttp.StatusBadRequest))
+		return
+	}
+
+	body := &EditTopicRequest{}
+	if err = bind(w, r, body); err != nil {
+		reply(w, r, newErrorWithStatus(err, "invalid-payload", nethttp.StatusBadRequest))
+		return
+	}
+
+	topic, err := news.NewTopic(ID, body.Name)
+	if err != nil {
+		reply(w, r, newErrorWithStatus(err, "invalid-topic", nethttp.StatusBadRequest))
+		return
+	}
+
+	err = h.application.Commands.EditTopic.Execute(r.Context(), commands.EditTopic{Topic: topic})
+	if errors.Is(err, news.ErrTopicNotFound) {
+		reply(w, r, newErrorWithStatus(err, "topic-not-found", nethttp.StatusNotFound))
+		return
+	}
+
+	if err != nil {
+		reply(w, r, newErrorWithStatus(err, "unable-to-edit-topic", nethttp.StatusInternalServerError))
 		return
 	}
 

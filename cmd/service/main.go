@@ -73,7 +73,7 @@ func main() {
 			EditNews:        nil,
 			CreateTopic:     commands.NewCreateTopicHandler(topicsRepository),
 			RemoveTopicByID: commands.NewRemoveTopicByIDHandler(topicsRepository),
-			EditTopic:       nil,
+			EditTopic:       commands.NewEditTopicHandler(topicsRepository),
 		},
 		Queries: app.Queries{
 			NewsByID:      queries.NewNewsByIdHandler(newsRepository),

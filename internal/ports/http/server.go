@@ -109,8 +109,8 @@ func registerHandlers(r *chi.Mux, application *app.App, swagger *openapi3.T) {
 		}))
 	})
 
-	r.Route("/news", func(r chi.Router) {
-		r.Get("/", func(w nethttp.ResponseWriter, rq *nethttp.Request) {
+	r.Route("/news", func(router chi.Router) {
+		router.Get("/", func(w nethttp.ResponseWriter, rq *nethttp.Request) {
 			params, err := mapRequestQueryToPaginationParams(rq)
 			if err != nil {
 				reply(w, rq, newErrorWithStatus(err, "invalid-query", nethttp.StatusBadRequest))
@@ -120,28 +120,32 @@ func registerHandlers(r *chi.Mux, application *app.App, swagger *openapi3.T) {
 			h.GetNews(w, rq, params)
 		})
 
-		r.Post("/", h.PublishNews)
-		r.Route("/{newsID}", func(r chi.Router) {
-			r.Get("/", func(w nethttp.ResponseWriter, r *nethttp.Request) {
+		router.Post("/", h.PublishNews)
+		router.Route("/{newsID}", func(router chi.Router) {
+			router.Get("/", func(w nethttp.ResponseWriter, r *nethttp.Request) {
 				h.GetNewsByID(w, r, chi.URLParam(r, "newsID"))
 			})
 
-			r.Patch("/unpublish", func(w nethttp.ResponseWriter, r *nethttp.Request) {
+			router.Patch("/unpublish", func(w nethttp.ResponseWriter, r *nethttp.Request) {
 				h.UnPublishNews(w, r, chi.URLParam(r, "newsID"))
 			})
 		})
 	})
 
-	r.Route("/topics", func(r chi.Router) {
-		r.Get("/", h.GetTopics)
-		r.Post("/", h.CreateTopic)
-		r.Route("/{topicID}", func(r chi.Router) {
-			r.Get("/", func(w nethttp.ResponseWriter, r *nethttp.Request) {
-				h.GetTopicByID(w, r, chi.URLParam(r, "topicID"))
+	r.Route("/topics", func(router chi.Router) {
+		router.Get("/", h.GetTopics)
+		router.Post("/", h.CreateTopic)
+		router.Route("/{topicID}", func(r chi.Router) {
+			r.Get("/", func(w nethttp.ResponseWriter, req *nethttp.Request) {
+				h.GetTopicByID(w, req, chi.URLParam(req, "topicID"))
 			})
 
 			r.Delete("/", func(w nethttp.ResponseWriter, r *nethttp.Request) {
 				h.RemoveTopicByID(w, r, chi.URLParam(r, "topicID"))
+			})
+
+			r.Put("/", func(w nethttp.ResponseWriter, r *nethttp.Request) {
+				h.EditTopic(w, r, chi.URLParam(r, "topicID"))
 			})
 		})
 	})
