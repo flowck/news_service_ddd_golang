@@ -63,3 +63,27 @@ func (h handlers) GetTopicByID(w nethttp.ResponseWriter, r *nethttp.Request, top
 
 	reply(w, r, GetTopicPayload{Data: mapDomainTopicToResponse(topic)})
 }
+
+func (h handlers) RemoveTopicByID(w nethttp.ResponseWriter, r *nethttp.Request, topicID string) {
+	ID, err := domain.NewIDFromString(topicID)
+	if err != nil {
+		reply(w, r, newErrorWithStatus(err, "invalid-topic-id", nethttp.StatusBadRequest))
+		return
+	}
+
+	err = h.application.Commands.RemoveTopicByID.Execute(r.Context(), commands.RemoveTopicByID{ID: ID})
+	if errors.Is(err, news.ErrTopicNotFound) {
+		if errors.Is(err, news.ErrTopicNotFound) {
+			reply(w, r, newErrorWithStatus(err, "topic-not-found", nethttp.StatusNotFound))
+			return
+		}
+		return
+	}
+
+	if err != nil {
+		reply(w, r, newErrorWithStatus(err, "unable-to-remove-topic", nethttp.StatusInternalServerError))
+		return
+	}
+
+	replyWithStatus(w, r, nil, nethttp.StatusNoContent)
+}

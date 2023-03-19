@@ -3,9 +3,8 @@ package app
 import (
 	"context"
 
-	"github.com/flowck/news_service_ddd_golang/internal/app/queries"
-
 	"github.com/flowck/news_service_ddd_golang/internal/app/commands"
+	"github.com/flowck/news_service_ddd_golang/internal/app/queries"
 	"github.com/flowck/news_service_ddd_golang/internal/domain/news"
 )
 
@@ -18,12 +17,12 @@ type QueryHandler[Q any, R any] interface {
 }
 
 type Commands struct {
-	PublishNews   CommandHandler[commands.PublishNews]
-	UnPublishNews CommandHandler[commands.UnPublishNews]
-	EditNews      CommandHandler[any]
-	CreateTopic   CommandHandler[commands.CreateTopic]
-	RemoveTopic   CommandHandler[any]
-	EditTopic     CommandHandler[any]
+	PublishNews     CommandHandler[commands.PublishNews]
+	UnPublishNews   CommandHandler[commands.UnPublishNews]
+	EditNews        CommandHandler[any]
+	CreateTopic     CommandHandler[commands.CreateTopic]
+	RemoveTopicByID CommandHandler[commands.RemoveTopicByID]
+	EditTopic       CommandHandler[any]
 }
 
 type Queries struct {
