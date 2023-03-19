@@ -33,8 +33,8 @@ func TestTopicsRepositoryLifecycle(t *testing.T) {
 	topic := fixtureTopic(t)
 	assert.Nil(t, repo.Insert(ctx, topic))
 
-	// Find
-	topics, err := repo.Find(ctx)
+	// FindAll
+	topics, err := repo.FindAll(ctx)
 	require.Nil(t, err)
 	assert.Equal(t, true, len(topics) > 0)
 }

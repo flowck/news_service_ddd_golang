@@ -38,7 +38,7 @@ func TestNewsRepositoryLifecycle(t *testing.T) {
 	n := fixtureNews(t)
 	assert.Nil(t, repo.Insert(ctx, n, nil))
 
-	// Find
+	// FindAll
 	n1, err := repo.Find(ctx, n.Id())
 	require.Nil(t, err)
 

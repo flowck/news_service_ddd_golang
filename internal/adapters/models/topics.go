@@ -687,7 +687,7 @@ func Topics(mods ...qm.QueryMod) topicQuery {
 }
 
 // FindTopic retrieves a single record by ID with an executor.
-// If selectCols is empty Find will return all columns.
+// If selectCols is empty FindAll will return all columns.
 func FindTopic(ctx context.Context, exec boil.ContextExecutor, iD string, selectCols ...string) (*Topic, error) {
 	topicObj := &Topic{}
 
