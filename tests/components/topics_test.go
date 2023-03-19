@@ -1,12 +1,13 @@
 package components
 
 import (
+	"net/http"
+	"testing"
+
 	"github.com/brianvoe/gofakeit"
 	"github.com/flowck/news_service_ddd_golang/tests/client"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"net/http"
-	"testing"
 )
 
 func TestTopics(t *testing.T) {
