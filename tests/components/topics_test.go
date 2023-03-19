@@ -29,7 +29,6 @@ func TestTopics(t *testing.T) {
 	// get topic by id
 	res03, err := getClient(t).GetTopicByIDWithResponse(ctx, res02.JSON200.Data[0].Id)
 	require.Nil(t, err)
-
 	assert.Equal(t, http.StatusOK, res03.StatusCode())
 	assert.Equal(t, res02.JSON200.Data[0].Id, res03.JSON200.Data.Id)
 	assert.Equal(t, res02.JSON200.Data[0].Name, res03.JSON200.Data.Name)
@@ -37,19 +36,31 @@ func TestTopics(t *testing.T) {
 	// topic not found
 	res04, err := getClient(t).GetTopicByIDWithResponse(ctx, gofakeit.UUID())
 	require.Nil(t, err)
-
 	assert.Equal(t, http.StatusNotFound, res04.StatusCode())
 
 	// remove topic by id
 	res05, err := getClient(t).RemoveTopicByID(ctx, res03.JSON200.Data.Id)
 	require.Nil(t, err)
-
 	assert.Equal(t, http.StatusNoContent, res05.StatusCode)
 
 	res06, err := getClient(t).GetTopicByIDWithResponse(ctx, res03.JSON200.Data.Id)
 	require.Nil(t, err)
-
 	assert.Equal(t, http.StatusNotFound, res06.StatusCode())
+
+	// edit topic
+	updatedTopicReq := client.EditTopicRequest{Name: gofakeit.BeerName()}
+	res07, err := getClient(t).EditTopic(ctx, res02.JSON200.Data[1].Id, updatedTopicReq)
+	require.Nil(t, err)
+	assert.Equal(t, http.StatusNoContent, res07.StatusCode)
+
+	res08, err := getClient(t).GetTopicByIDWithResponse(ctx, res02.JSON200.Data[1].Id)
+	require.Nil(t, err)
+	assert.Equal(t, http.StatusOK, res08.StatusCode())
+	assert.Equal(t, updatedTopicReq.Name, res08.JSON200.Data.Name)
+
+	res09, err := getClient(t).EditTopic(ctx, gofakeit.UUID(), updatedTopicReq)
+	require.Nil(t, err)
+	assert.Equal(t, http.StatusNotFound, res09.StatusCode)
 }
 
 func fixtureTopic(t *testing.T) client.CreateTopicRequest {
