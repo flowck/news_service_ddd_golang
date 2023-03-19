@@ -52,3 +52,7 @@ func (p psqlRepository) Find(ctx context.Context, ID domain.ID) (*news.Topic, er
 
 	return mapTopicModelToTopicDomain(row)
 }
+
+func (p psqlRepository) DeleteByID(ctx context.Context, ID domain.ID) error {
+	return nil
+}
