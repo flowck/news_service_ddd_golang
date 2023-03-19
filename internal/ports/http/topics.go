@@ -3,6 +3,8 @@ package http
 import (
 	nethttp "net/http"
 
+	"github.com/flowck/news_service_ddd_golang/internal/app/queries"
+
 	"github.com/flowck/news_service_ddd_golang/internal/app/commands"
 	"github.com/flowck/news_service_ddd_golang/internal/domain"
 	"github.com/flowck/news_service_ddd_golang/internal/domain/news"
@@ -31,5 +33,11 @@ func (h handlers) CreateTopic(w nethttp.ResponseWriter, r *nethttp.Request) {
 }
 
 func (h handlers) GetTopics(w nethttp.ResponseWriter, r *nethttp.Request) {
-	reply(w, r, GetTopicsPayload{Data: mapDomainTopicsToResponse(nil)})
+	topics, err := h.application.Queries.Topics.Execute(r.Context(), queries.Topics{})
+	if err != nil {
+		reply(w, r, newErrorWithStatus(err, "unable-to-get-topics", nethttp.StatusInternalServerError))
+		return
+	}
+
+	reply(w, r, GetTopicsPayload{Data: mapDomainTopicsToResponse(topics)})
 }

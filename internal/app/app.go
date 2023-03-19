@@ -30,7 +30,7 @@ type Queries struct {
 	NewsByID      QueryHandler[queries.NewsByID, *news.News]
 	NewsByFilters QueryHandler[queries.NewsByFilters, queries.NewsPaginated]
 	Topic         QueryHandler[any, any]
-	Topics        QueryHandler[any, any]
+	Topics        QueryHandler[queries.Topics, []*news.Topic]
 }
 
 type App struct {
