@@ -2,11 +2,12 @@ package topics
 
 import (
 	"context"
-	"github.com/flowck/news_service_ddd_golang/internal/adapters/models"
 
-	"github.com/flowck/news_service_ddd_golang/internal/domain/news"
 	"github.com/friendsofgo/errors"
 	"github.com/volatiletech/sqlboiler/v4/boil"
+
+	"github.com/flowck/news_service_ddd_golang/internal/adapters/models"
+	"github.com/flowck/news_service_ddd_golang/internal/domain/news"
 )
 
 type psqlRepository struct {

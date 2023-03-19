@@ -62,7 +62,7 @@ func TestMain(m *testing.M) {
 func fixtureTopic(t *testing.T) *news.Topic {
 	n, err := news.NewTopic(
 		domain.NewID(),
-		gofakeit.BeerAlcohol(),
+		gofakeit.BeerName(),
 	)
 	require.Nil(t, err)
 

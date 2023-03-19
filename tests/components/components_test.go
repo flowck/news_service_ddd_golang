@@ -7,8 +7,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/flowck/news_service_ddd_golang/tests/client"
+	"github.com/brianvoe/gofakeit"
 	"github.com/stretchr/testify/require"
+
+	"github.com/flowck/news_service_ddd_golang/tests/client"
 )
 
 var (
@@ -17,6 +19,7 @@ var (
 )
 
 func TestMain(m *testing.M) {
+	gofakeit.Seed(0)
 	tmpCtx, cancel := context.WithTimeout(context.Background(), testsTimeout)
 	defer cancel()
 	ctx = tmpCtx
