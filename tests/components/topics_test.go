@@ -25,6 +25,21 @@ func TestTopics(t *testing.T) {
 		assert.NotEmpty(t, topic.Id)
 		assert.NotEmpty(t, topic.Name)
 	}
+
+	// get topic by id
+	res03, err := getClient(t).GetTopicByIDWithResponse(ctx, res02.JSON200.Data[0].Id)
+	require.Nil(t, err)
+
+	assert.Equal(t, http.StatusOK, res03.StatusCode())
+	assert.Equal(t, res02.JSON200.Data[0].Id, res03.JSON200.Data.Id)
+	assert.Equal(t, res02.JSON200.Data[0].Name, res03.JSON200.Data.Name)
+
+	// topic not found
+	res04, err := getClient(t).GetTopicByIDWithResponse(ctx, gofakeit.UUID())
+	require.Nil(t, err)
+
+	assert.Equal(t, http.StatusNotFound, res04.StatusCode())
+
 }
 
 func fixtureTopic(t *testing.T) client.CreateTopicRequest {
