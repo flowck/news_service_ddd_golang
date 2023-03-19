@@ -108,7 +108,7 @@ var (
 
 type (
 	// TopicSlice is an alias for a slice of pointers to Topic.
-	// This should almost always be used instead of []Topic.
+	// This should almost always be used instead of []TopicByID.
 	TopicSlice []*Topic
 	// TopicHook is the signature for custom Topic hook methods
 	TopicHook func(context.Context, boil.ContextExecutor, *Topic) error
@@ -339,7 +339,7 @@ func (q topicQuery) All(ctx context.Context, exec boil.ContextExecutor) (TopicSl
 
 	err := q.Bind(ctx, exec, &o)
 	if err != nil {
-		return nil, errors.Wrap(err, "models: failed to assign all query results to Topic slice")
+		return nil, errors.Wrap(err, "models: failed to assign all query results to TopicByID slice")
 	}
 
 	if len(topicAfterSelectHooks) != 0 {
@@ -1067,7 +1067,7 @@ func (o *Topic) Upsert(ctx context.Context, exec boil.ContextExecutor, updateOnC
 // Delete will match against the primary key column to find the record to delete.
 func (o *Topic) Delete(ctx context.Context, exec boil.ContextExecutor) (int64, error) {
 	if o == nil {
-		return 0, errors.New("models: no Topic provided for delete")
+		return 0, errors.New("models: no TopicByID provided for delete")
 	}
 
 	if err := o.doBeforeDeleteHooks(ctx, exec); err != nil {

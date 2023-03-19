@@ -3,6 +3,9 @@ package http
 import (
 	nethttp "net/http"
 
+	"github.com/flowck/news_service_ddd_golang/internal/ports/http/static"
+	"github.com/friendsofgo/errors"
+
 	"github.com/flowck/news_service_ddd_golang/internal/app/commands"
 	"github.com/flowck/news_service_ddd_golang/internal/app/queries"
 	"github.com/flowck/news_service_ddd_golang/internal/domain"
@@ -39,4 +42,29 @@ func (h handlers) GetTopics(w nethttp.ResponseWriter, r *nethttp.Request) {
 	}
 
 	reply(w, r, GetTopicsPayload{Data: mapDomainTopicsToResponse(topics)})
+}
+
+func (h handlers) GetTopicByID(w nethttp.ResponseWriter, r *nethttp.Request, topicID string) {
+	ID, err := domain.NewIDFromString(topicID)
+	if err != nil {
+		reply(w, r, newErrorWithStatus(err, "invalid-topic-id", nethttp.StatusBadRequest))
+		return
+	}
+
+	_, err = h.application.Queries.TopicByID.Execute(r.Context(), queries.TopicByID{ID: ID})
+	if errors.Is(err, news.ErrTopicNotFound) {
+		reply(w, r, newErrorWithStatus(err, "topic-not-found", nethttp.StatusNotFound))
+		return
+	}
+
+	if err != nil {
+		reply(w, r, newErrorWithStatus(err, "unable-to-get-topic", nethttp.StatusInternalServerError))
+		return
+	}
+
+	// mapDomainTopicToResponse(topic)
+	reply(w, r, GetTopicPayload{Data: static.Topic{
+		Id:   "",
+		Name: "",
+	}})
 }

@@ -80,7 +80,7 @@ func main() {
 		Queries: app.Queries{
 			NewsByID:      queries.NewNewsByIdHandler(newsRepository),
 			NewsByFilters: queries.NewNewsByFiltersHandler(newsRepository),
-			Topic:         nil,
+			TopicByID:     queries.NewTopicByIdHandler(topicsRepository),
 			Topics:        queries.NewTopicsHandler(topicsRepository),
 		},
 	}

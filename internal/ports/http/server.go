@@ -135,6 +135,11 @@ func registerHandlers(r *chi.Mux, application *app.App, swagger *openapi3.T) {
 	r.Route("/topics", func(r chi.Router) {
 		r.Get("/", h.GetTopics)
 		r.Post("/", h.CreateTopic)
+		r.Route("/{topicID}", func(r chi.Router) {
+			r.Get("/", func(w nethttp.ResponseWriter, r *nethttp.Request) {
+				h.GetTopicByID(w, r, chi.URLParam(r, "topicID"))
+			})
+		})
 	})
 }
 

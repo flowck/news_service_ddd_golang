@@ -9,7 +9,8 @@ import (
 )
 
 var (
-	ErrNewsNotFound = errors.New("news not found")
+	ErrNewsNotFound  = errors.New("news not found")
+	ErrTopicNotFound = errors.New("topic not found")
 )
 
 type Repository interface {
