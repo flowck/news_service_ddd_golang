@@ -84,6 +84,28 @@ paths:
           $ref: '#/components/responses/GetNewsPayload'
         default:
           $ref: '#/components/responses/DefaultError'
+    put:
+      tags:
+        - News
+      summary: Edit news
+      operationId: editNews
+      parameters:
+        - name: newsID
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EditNewsRequest"
+      responses:
+        '204':
+          description: Edited
+        default:
+          $ref: '#/components/responses/DefaultError'
   /news/{newsID}/unpublish:
     patch:
       tags:
@@ -256,6 +278,31 @@ components:
       properties:
         name:
           type: string
+    EditNewsRequest:
+      type: object
+      required:
+        - title
+        - slug
+        - content
+        - status
+        - topicIds
+        - publishedAt
+      properties:
+        title:
+          type: string
+        slug:
+          type: string
+        content:
+          type: string
+        status:
+          type: string
+        topicsIds:
+          type: array
+          items:
+            type: string
+        publishedAt:
+          type: string
+          format: date-time
     GenericResponse:
       type: object
       required:
