@@ -3,6 +3,8 @@ package commands
 import (
 	"context"
 
+	"github.com/flowck/news_service_ddd_golang/internal/domain/news"
+
 	"github.com/flowck/news_service_ddd_golang/internal/domain"
 )
 
@@ -20,14 +22,12 @@ func NewUnPublishNewsHandler(txProvider TransactionProvider) unPublishNewsHandle
 
 func (p unPublishNewsHandler) Execute(ctx context.Context, cmd UnPublishNews) error {
 	return p.txProvider.Transact(ctx, func(adapters TransactableAdapters) error {
-		n, err := adapters.NewsRepository.Find(ctx, cmd.ID)
+		err := adapters.NewsRepository.Update(ctx, cmd.ID, nil, func(n *news.News) error {
+			n.UnPublish()
+			return nil
+		})
+
 		if err != nil {
-			return err
-		}
-
-		n.UnPublish()
-
-		if err = adapters.NewsRepository.Update(ctx, n); err != nil {
 			return nil
 		}
 

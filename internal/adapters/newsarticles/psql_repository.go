@@ -47,10 +47,32 @@ func (p psqlRepository) Find(ctx context.Context, ID domain.ID) (*news.News, err
 	return mapNewsModelToNewsDomain(row)
 }
 
-func (p psqlRepository) Update(ctx context.Context, n *news.News) error {
+// Update news' topics
+
+func (p psqlRepository) Update(
+	ctx context.Context,
+	ID domain.ID,
+	topicIDs []domain.ID,
+	updater func(n *news.News) error,
+) error {
+	n, err := p.Find(ctx, ID)
+	if err != nil {
+		return err
+	}
+
+	if err = updater(n); err != nil {
+		return err
+	}
+
 	row := mapNewsToDbModel(n)
 
-	if _, err := row.Update(ctx, p.db, boil.Infer()); err != nil {
+	if topicIDs != nil {
+		if err = p.setTopicsToNewsArticle(ctx, row, topicIDs); err != nil {
+			return err
+		}
+	}
+
+	if _, err = row.Update(ctx, p.db, boil.Infer()); err != nil {
 		return err
 	}
 

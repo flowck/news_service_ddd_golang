@@ -63,9 +63,11 @@ func TestNewsRepositoryLifecycle(t *testing.T) {
 		assert.Nil(t, err)
 	})
 
-	// Update
-	n.UnPublish()
-	assert.Nil(t, repo.Update(ctx, n))
+	// Edit
+	assert.Nil(t, repo.Update(ctx, n.Id(), nil, func(n *news.News) error {
+		n.UnPublish()
+		return nil
+	}))
 }
 
 func TestMain(m *testing.M) {

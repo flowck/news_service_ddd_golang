@@ -18,6 +18,23 @@ type News struct {
 	lastEditedAt time.Time
 }
 
+func (n *News) Edit(
+	title string,
+	content string,
+	slug Slug,
+	status Status,
+	publishedAt time.Time,
+) error {
+	n.slug = slug
+	n.title = title
+	n.status = status
+	n.content = content
+	n.publishedAt = publishedAt
+	n.lastEditedAt = time.Now()
+
+	return nil
+}
+
 func (n *News) Id() domain.ID {
 	return n.id
 }
