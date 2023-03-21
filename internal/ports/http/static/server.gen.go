@@ -24,6 +24,16 @@ type CreateTopicRequest struct {
 	Name string `json:"name"`
 }
 
+// EditNewsRequest defines model for EditNewsRequest.
+type EditNewsRequest struct {
+	Content     string    `json:"content"`
+	PublishedAt time.Time `json:"publishedAt"`
+	Slug        string    `json:"slug"`
+	Status      string    `json:"status"`
+	Title       string    `json:"title"`
+	TopicsIds   *[]string `json:"topicsIds,omitempty"`
+}
+
 // EditTopicRequest defines model for EditTopicRequest.
 type EditTopicRequest struct {
 	Name string `json:"name"`
@@ -103,6 +113,9 @@ type GetNewsParams struct {
 // PublishNewsJSONRequestBody defines body for PublishNews for application/json ContentType.
 type PublishNewsJSONRequestBody = PublishNewsRequest
 
+// EditNewsJSONRequestBody defines body for EditNews for application/json ContentType.
+type EditNewsJSONRequestBody = EditNewsRequest
+
 // CreateTopicJSONRequestBody defines body for CreateTopic for application/json ContentType.
 type CreateTopicJSONRequestBody = CreateTopicRequest
 
@@ -120,6 +133,9 @@ type ServerInterface interface {
 	// Get news
 	// (GET /news/{newsID})
 	GetNewsByID(w http.ResponseWriter, r *http.Request, newsID string)
+	// Edit news
+	// (PUT /news/{newsID})
+	EditNews(w http.ResponseWriter, r *http.Request, newsID string)
 	// UnPublish news
 	// (PATCH /news/{newsID}/unpublish)
 	UnPublishNews(w http.ResponseWriter, r *http.Request, newsID string)
@@ -233,6 +249,32 @@ func (siw *ServerInterfaceWrapper) GetNewsByID(w http.ResponseWriter, r *http.Re
 
 	var handler http.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GetNewsByID(w, r, newsID)
+	})
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r.WithContext(ctx))
+}
+
+// EditNews operation middleware
+func (siw *ServerInterfaceWrapper) EditNews(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	var err error
+
+	// ------------- Path parameter "newsID" -------------
+	var newsID string
+
+	err = runtime.BindStyledParameterWithLocation("simple", false, "newsID", runtime.ParamLocationPath, chi.URLParam(r, "newsID"), &newsID)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "newsID", Err: err})
+		return
+	}
+
+	var handler http.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.EditNews(w, r, newsID)
 	})
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -499,6 +541,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Get(options.BaseURL+"/news/{newsID}", wrapper.GetNewsByID)
 	})
 	r.Group(func(r chi.Router) {
+		r.Put(options.BaseURL+"/news/{newsID}", wrapper.EditNews)
+	})
+	r.Group(func(r chi.Router) {
 		r.Patch(options.BaseURL+"/news/{newsID}/unpublish", wrapper.UnPublishNews)
 	})
 	r.Group(func(r chi.Router) {
@@ -523,26 +568,27 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"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",
+	"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",
+	"/4pIHaNtGgAA",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

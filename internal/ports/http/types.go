@@ -17,6 +17,7 @@ type CreateTopicRequest static.CreateTopicRequest
 type GetTopicsPayload static.GetTopicsPayload
 type GetTopicPayload static.GetTopicPayload
 type EditTopicRequest static.EditTopicRequest
+type EditNewsRequest static.EditNewsRequest
 
 type ErrResponse struct {
 	Err     error  `json:"-"`
@@ -59,5 +60,9 @@ func (p CreateTopicRequest) Bind(r *http.Request) error {
 }
 
 func (p EditTopicRequest) Bind(r *http.Request) error {
+	return nil
+}
+
+func (p EditNewsRequest) Bind(r *http.Request) error {
 	return nil
 }

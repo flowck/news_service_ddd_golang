@@ -131,3 +131,38 @@ func (h handlers) UnPublishNews(w nethttp.ResponseWriter, r *nethttp.Request, ne
 
 	replyWithStatus(w, r, GenericResponse{}, nethttp.StatusNoContent)
 }
+
+func (h handlers) EditNews(w nethttp.ResponseWriter, r *nethttp.Request, newsID string) {
+	ID, err := domain.NewIDFromString(newsID)
+	if err != nil {
+		reply(w, r, newErrorWithStatus(err, "invalid-news-id", nethttp.StatusBadRequest))
+		return
+	}
+
+	body := &EditNewsRequest{}
+	if err = bind(w, r, body); err != nil {
+		return
+	}
+
+	cmd := commands.EditNews{
+		ID:          ID,
+		Content:     body.Content,
+		Slug:        body.Slug,
+		Status:      body.Status,
+		Title:       body.Title,
+		PublishedAt: body.PublishedAt,
+		TopicsIds:   nil,
+	}
+	err = h.application.Commands.EditNews.Execute(r.Context(), cmd)
+	if errors.Is(err, news.ErrNewsNotFound) {
+		reply(w, r, newErrorWithStatus(err, "news-not-found", nethttp.StatusNotFound))
+		return
+	}
+
+	if err != nil {
+		reply(w, r, newErrorWithStatus(err, "unable-to-edit-news", nethttp.StatusInternalServerError))
+		return
+	}
+
+	replyWithStatus(w, r, nil, nethttp.StatusNoContent)
+}
