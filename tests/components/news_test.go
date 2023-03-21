@@ -22,7 +22,7 @@ func TestNews(t *testing.T) {
 	require.Nil(t, err)
 	assert.Equal(t, http.StatusCreated, res01.StatusCode)
 
-	// Seed news
+	// seed_news
 	for i := 0; i < 10; i++ {
 		_, err = getClient(t).PublishNews(ctx, fixtureNews())
 		require.Nil(t, err)
@@ -39,6 +39,8 @@ func TestNews(t *testing.T) {
 	assert.Equal(t, http.StatusOK, res02.StatusCode())
 	assert.Equal(t, limit01, len(res02.JSON200.Data))
 	assert.Equal(t, 1, res02.JSON200.Page)
+
+	newsListResponse := res02.JSON200.Data
 
 	// get_news_by_id
 	news01byId, err := getClient(t).GetNewsByIDWithResponse(ctx, res02.JSON200.Data[0].Id)
@@ -58,6 +60,30 @@ func TestNews(t *testing.T) {
 	unPublishedNews, err := getClient(t).GetNewsByIDWithResponse(ctx, res02.JSON200.Data[0].Id)
 	require.Nil(t, err)
 	assert.Equal(t, news.StatusDraft.String(), unPublishedNews.JSON200.Data.Status)
+
+	// edit_news
+	editNewsReq := client.EditNewsJSONRequestBody{
+		Content:     gofakeit.Sentence(30),
+		PublishedAt: time.Now().Add(time.Hour * 24),
+		Slug:        slug.Make(gofakeit.Question()),
+		Status:      news.StatusPublished.String(),
+		Title:       gofakeit.Question(),
+		TopicsIds:   nil,
+	}
+	res04, err := getClient(t).EditNews(ctx, newsListResponse[2].Id, editNewsReq)
+
+	require.Nil(t, err)
+	assert.Equal(t, http.StatusNoContent, res04.StatusCode)
+
+	// get_news_by_id
+	editedNews, err := getClient(t).GetNewsByIDWithResponse(ctx, newsListResponse[2].Id)
+
+	require.Nil(t, err)
+	assert.Equal(t, http.StatusOK, editedNews.StatusCode())
+	assert.Equal(t, editNewsReq.Title, editedNews.JSON200.Data.Title)
+	assert.Equal(t, editNewsReq.Status, editedNews.JSON200.Data.Status)
+	assert.Equal(t, editNewsReq.Slug, editedNews.JSON200.Data.Slug)
+	assert.Equal(t, editNewsReq.Content, editedNews.JSON200.Data.Content)
 }
 
 func fixtureNews() client.PublishNewsJSONRequestBody {
