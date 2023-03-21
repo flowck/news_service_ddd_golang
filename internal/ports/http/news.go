@@ -144,11 +144,23 @@ func (h handlers) EditNews(w nethttp.ResponseWriter, r *nethttp.Request, newsID 
 		return
 	}
 
+	sl, err := news.NewSlugFromString(body.Slug)
+	if err != nil {
+		reply(w, r, newErrorWithStatus(err, "invalid-slug", nethttp.StatusBadRequest))
+		return
+	}
+
+	status, err := news.NewStatusFromString(body.Status)
+	if err != nil {
+		reply(w, r, newErrorWithStatus(err, "invalid-status", nethttp.StatusBadRequest))
+		return
+	}
+
 	cmd := commands.EditNews{
 		ID:          ID,
 		Content:     body.Content,
-		Slug:        body.Slug,
-		Status:      body.Status,
+		Slug:        sl,
+		Status:      status,
 		Title:       body.Title,
 		PublishedAt: body.PublishedAt,
 		TopicsIds:   nil,

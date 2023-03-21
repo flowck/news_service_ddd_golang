@@ -36,7 +36,7 @@ func mapDomainNewsListToResponseNewsList(newsList []*news.News) []static.News {
 }
 
 func mapDomainNewsToResponseNews(n *news.News) static.News {
-	topics := make([]static.Topic, 1)
+	var topics []static.Topic
 
 	if n.Topics() != nil {
 		topics = mapDomainTopicsToResponse(n.Topics())

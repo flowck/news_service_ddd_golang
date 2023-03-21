@@ -57,7 +57,7 @@ func TestTopicsRepositoryLifecycle(t *testing.T) {
 	err = repo.DeleteByID(ctx, domain.NewID())
 	assert.ErrorIs(t, err, news.ErrTopicNotFound)
 
-	// Update
+	// Edit
 	toBeUpdatedTopic := topics[1]
 	require.Nil(t, toBeUpdatedTopic.Edit(gofakeit.BeerName()))
 

@@ -70,7 +70,7 @@ func main() {
 		Commands: app.Commands{
 			PublishNews:     commands.NewPublishNewsHandler(txProvider),
 			UnPublishNews:   commands.NewUnPublishNewsHandler(txProvider),
-			EditNews:        nil,
+			EditNews:        commands.NewEditNewsHandler(newsRepository),
 			CreateTopic:     commands.NewCreateTopicHandler(topicsRepository),
 			RemoveTopicByID: commands.NewRemoveTopicByIDHandler(topicsRepository),
 			EditTopic:       commands.NewEditTopicHandler(topicsRepository),
