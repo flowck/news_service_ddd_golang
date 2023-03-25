@@ -12,6 +12,10 @@ type PublishNews struct {
 	TopicIds []domain.ID
 }
 
+func (n PublishNews) String() string {
+	return n.News.Id().String()
+}
+
 type publishNewsHandler struct {
 	txProvider TransactionProvider
 }
