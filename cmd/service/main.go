@@ -8,6 +8,9 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/flowck/news_service_ddd_golang/internal/common/observability"
+	"github.com/flowck/news_service_ddd_golang/internal/domain/news"
+
 	"github.com/kelseyhightower/envconfig"
 	_ "github.com/lib/pq"
 
@@ -76,7 +79,7 @@ func main() {
 			EditTopic:       commands.NewEditTopicHandler(topicsRepository),
 		},
 		Queries: app.Queries{
-			NewsByID:      queries.NewNewsByIdHandler(newsRepository),
+			NewsByID:      observability.NewQueryDecorator[queries.NewsByID, *news.News](queries.NewNewsByIdHandler(newsRepository), logger),
 			NewsByFilters: queries.NewNewsByFiltersHandler(newsRepository),
 			TopicByID:     queries.NewTopicByIdHandler(topicsRepository),
 			Topics:        queries.NewTopicsHandler(topicsRepository),
