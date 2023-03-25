@@ -1,16 +1,13 @@
 package http
 
 import (
+	"errors"
 	nethttp "net/http"
 
-	"github.com/flowck/news_service_ddd_golang/internal/app/queries"
-
-	"github.com/friendsofgo/errors"
-
 	"github.com/flowck/news_service_ddd_golang/internal/app/commands"
+	"github.com/flowck/news_service_ddd_golang/internal/app/queries"
 	"github.com/flowck/news_service_ddd_golang/internal/domain"
 	"github.com/flowck/news_service_ddd_golang/internal/domain/news"
-
 	"github.com/flowck/news_service_ddd_golang/internal/ports/http/static"
 )
 
@@ -105,7 +102,7 @@ func (h handlers) PublishNews(w nethttp.ResponseWriter, r *nethttp.Request) {
 		return
 	}
 
-	replyWithStatus(w, r, GenericResponse{}, nethttp.StatusCreated)
+	replyWithStatus(w, r, GenericResponse{Message: "news created successfully"}, nethttp.StatusCreated)
 }
 
 func (h handlers) UnPublishNews(w nethttp.ResponseWriter, r *nethttp.Request, newsID string) {

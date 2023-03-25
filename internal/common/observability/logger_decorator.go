@@ -11,7 +11,21 @@ type commandLoggingDecorator[C any] struct {
 	base   CommandHandler[C]
 }
 
-func (c commandLoggingDecorator[C]) Execute(ctx context.Context, cmd C) error {
+func (c commandLoggingDecorator[C]) Execute(ctx context.Context, cmd C) (err error) {
+	logger := c.logger.WithFields(logs.Fields{
+		"name": handlerName(c.base),
+		"cmd":  prettyPrint(cmd),
+	})
+
+	logger.Debug("Executing command")
+	defer func() {
+		if err == nil {
+			logger.Info("Command executed successfully")
+		} else {
+			logger.WithError(err).Error("Failed to execute command")
+		}
+	}()
+
 	return c.base.Execute(ctx, cmd)
 }
 

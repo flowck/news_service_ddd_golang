@@ -8,9 +8,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/flowck/news_service_ddd_golang/internal/common/observability"
-	"github.com/flowck/news_service_ddd_golang/internal/domain/news"
-
 	"github.com/kelseyhightower/envconfig"
 	_ "github.com/lib/pq"
 
@@ -21,7 +18,9 @@ import (
 	"github.com/flowck/news_service_ddd_golang/internal/app/commands"
 	"github.com/flowck/news_service_ddd_golang/internal/app/queries"
 	"github.com/flowck/news_service_ddd_golang/internal/common/logs"
+	"github.com/flowck/news_service_ddd_golang/internal/common/observability"
 	"github.com/flowck/news_service_ddd_golang/internal/common/psql"
+	"github.com/flowck/news_service_ddd_golang/internal/domain/news"
 	"github.com/flowck/news_service_ddd_golang/internal/ports/http"
 )
 
@@ -71,7 +70,7 @@ func main() {
 
 	application := &app.App{
 		Commands: app.Commands{
-			PublishNews:     commands.NewPublishNewsHandler(txProvider),
+			PublishNews:     observability.NewCommandDecorator[commands.PublishNews](commands.NewPublishNewsHandler(txProvider), logger),
 			UnPublishNews:   commands.NewUnPublishNewsHandler(txProvider),
 			EditNews:        commands.NewEditNewsHandler(newsRepository),
 			CreateTopic:     commands.NewCreateTopicHandler(topicsRepository),
