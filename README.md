@@ -14,5 +14,5 @@ the dependencies needed to run and extend this project.
 
 ## Reference
 
-- Reference implementation: [https://github.com/ThreeDotsLabs/wild-workouts-go-ddd-example](https://github.com/ThreeDotsLabs/wild-workouts-go-ddd-example)
+- Reference architecture by ThreeDots.Tech: [https://github.com/ThreeDotsLabs/wild-workouts-go-ddd-example](https://github.com/ThreeDotsLabs/wild-workouts-go-ddd-example)
 - Original project: [https://github.com/jojoarianto/go-ddd-api](https://github.com/jojoarianto/go-ddd-api)

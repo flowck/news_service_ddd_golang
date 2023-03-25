@@ -20,6 +20,20 @@ type queryLoggingDecorator[Q any, R any] struct {
 	base   QueryHandler[Q, R]
 }
 
-func (c queryLoggingDecorator[Q, R]) Execute(ctx context.Context, q Q) (R, error) {
+func (c queryLoggingDecorator[Q, R]) Execute(ctx context.Context, q Q) (result R, err error) {
+	logger := c.logger.WithFields(logs.Fields{
+		"name":  handlerName(c.base),
+		"query": prettyPrint(q),
+	})
+
+	logger.Debug("Executing query")
+	defer func() {
+		if err == nil {
+			logger.Info("Query executed successfully")
+		} else {
+			logger.WithError(err).Error("Failed to execute query")
+		}
+	}()
+
 	return c.base.Execute(ctx, q)
 }
